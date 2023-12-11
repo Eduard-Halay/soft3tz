@@ -35,7 +35,8 @@ $result = mysqli_query($induction, "SELECT * FROM `client`");
         }
         .form-select{
             width:180px;
-            padding: 10px;
+            padding-left: 30px;
+            padding-right: 30px;
         }
         .form-check-input:checked {
     background-color: #2ecc71; 
@@ -62,7 +63,7 @@ $result = mysqli_query($induction, "SELECT * FROM `client`");
                     <button type="button" class="btn btn-primary" id="applyChangesButton">OK</button>
                     </div>
 
-
+                    <div id="messageBox" class="mt-3 alert alert-danger" style="display: none;"></div>
                     <br>
                     <table class="table table-bordered">
                         <thead>
@@ -187,7 +188,7 @@ $(document).ready(function () {
         });
 
         if (selectedUserIds.length === 0) {
-            alert('Пожалуйста, выберите хотя бы одного пользователя.');
+            showMessage('Please select at least one user.');
             return;
         }
 
@@ -216,7 +217,7 @@ $(document).ready(function () {
         });
 
         if (selectedUserIds2.length === 0) {
-            alert('Пожалуйста, выберите хотя бы одного пользователя.');
+            showMessage('Please select at least one user.');
             return;
         }
 
@@ -420,6 +421,18 @@ function addUser() {
     $('#addUserModal').modal('hide');
 }
 
+
+
+function showMessage(message) {
+                var messageBox = $('#messageBox');
+                messageBox.text(message);
+                messageBox.show();
+
+                // Скрыть сообщение через 5 секунд
+                setTimeout(function () {
+                    messageBox.hide();
+                }, 5000);
+            }
     </script>
 
 <!-- модальное окно для добавления пользователя -->
@@ -527,55 +540,7 @@ function addUser() {
       
         $('#deleteConfirmationModal').data('user-ids', userIds);
     }
-    // Ок
-    function applyChanges() {
-        var actionSelect = document.getElementById('actionSelect');
-        var selectedAction = actionSelect.value;
-
-        var selectedUserIds = [];
-        $('.selectCheckbox:checked').each(function () {
-            selectedUserIds.push($(this).closest('tr').data('user-id'));
-        });
-
-        if (selectedUserIds.length === 0) {
-            alert('Please select at least one user.');
-            return;
-        }
-
-        switch (selectedAction) {
-            case 'activate':
-                updateStatus(selectedUserIds, 'on');
-                break;
-            case 'deactivate':
-                updateStatus(selectedUserIds, 'off');
-                break;
-            case 'delete':
-                // Вызываем функцию удаления пользователей
-                deleteUsers(selectedUserIds);
-                break;
-            default:
-                console.error('Invalid action selected');
-        }
-    }
-
-    $(document).ready(function () {
-        
-        $('#applyChangesButton').on('click', applyChanges);
-        
-     
-        $('#confirmDeleteBtn').click(function () {
-           
-            var userIds = $('#deleteConfirmationModal').data('user-ids');
-
-           
-            userIds.forEach(function (userId) {
-                deleteUser(userId);
-            });
-
-          
-            $('#deleteConfirmationModal').modal('hide');
-        });
-    });
+    
 </script>
 </body>
 </html>
