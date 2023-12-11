@@ -11,8 +11,7 @@ $result = mysqli_query($induction, "SELECT * FROM `client`");
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/k7ujTnHg4CGR2D7kSs0v4LLanw2qksYuRlEzO+tcaEPQogQ0KaoGN26/zrn20ImR1DfuLWnOo7aBA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    
-    <script src="https://code.jquery.com/jquery-3.6.4.min.js" integrity="sha384-UG8ao2jwOWB7/oDdObZc6ItJmwUkR/PfMyt9Qs5AwX7PsnYn1CRKCTWyncPTWvaS" crossorigin="anonymous"></script>
+     <script src="https://code.jquery.com/jquery-3.6.4.min.js" integrity="sha384-UG8ao2jwOWB7/oDdObZc6ItJmwUkR/PfMyt9Qs5AwX7PsnYn1CRKCTWyncPTWvaS" crossorigin="anonymous"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
 
@@ -35,8 +34,8 @@ $result = mysqli_query($induction, "SELECT * FROM `client`");
             background-color: gray;
         }
         .form-select{
-            width:150px;
-
+            width:180px;
+            padding: 10px;
         }
         .form-check-input:checked {
     background-color: #2ecc71; 
@@ -56,8 +55,8 @@ $result = mysqli_query($induction, "SELECT * FROM `client`");
                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">Add</button>
                      <select class="form-select rounded" id="actionSelect">
                         <option class='activ'>-Please-Select-</option>
-                        <option value="activate">Activate</option>
-                         <option value="deactivate">Deactivate</option>
+                        <option value="activate">Set Active</option>
+                         <option value="deactivate">Set Not active</option>
                          <option value="delete">Delete</option>
                      </select>
                     <button type="button" class="btn btn-primary" id="applyChangesButton">OK</button>
@@ -88,7 +87,7 @@ $result = mysqli_query($induction, "SELECT * FROM `client`");
                                 $statusClass = ($bd['status'] == 'on') ? 'status-active' : 'status-inactive';
                                 echo "<td class='text-center align-middle'><div class='status-circle {$statusClass}'></div></td>";
                                 echo "<td class='text-center align-middle'>";
-                                echo "<a href='#' class='btn border-dark btn-sm ms-1 btn-rounded' data-bs-toggle='modal' data-bs-target='#editModal{$userId}'>Edit</a>";
+                                echo "<a href='#' class='btn border-dark btn-sm ms-1 btn-rounded' data-bs-toggle='modal' data-bs-target='#editModal{$userId}'><i class='fa-solid fa-pen-to-square'></i></a>";
                                 echo "<a href='#' class='btn border-dark btn-sm me-1 btn-rounded deleteUserBtn'><i class='fas fa-trash-alt'></i></a>";
                                 echo "</td>";
                                 echo "</tr>";
@@ -146,7 +145,7 @@ $result = mysqli_query($induction, "SELECT * FROM `client`");
                         <select class="form-select" id="actionSelect2">
                             <option class='activ'>-Please-Select-</option>
                             <option value="activate">Set Active</option>
-                            <option value="deactivate">Set not Active</option>
+                            <option value="deactivate">Set Not Active</option>
                             <option value="delete">Delete</option>
                         </select>
                         <button type="button" class="btn btn-primary" id="applyChangesButton2">OK</button>
@@ -332,37 +331,7 @@ $('#confirmDeleteBtn').click(function () {
         };
         xhr.send(formData);
     }
-    // Функция добавления пользователя
-    function addUser() {
-        var nameInput = document.getElementById('addName');
-        var lastnameInput = document.getElementById('addLastname');
-        var roleSelect = document.getElementById('addRole');
-        var statusCheckbox = document.getElementById('addStatus');
-
-        var name = nameInput.value;
-        var lastname = lastnameInput.value;
-        var role = roleSelect.value;
-        var status = statusCheckbox.checked ? 'on' : 'off';
-
-        var formData = new FormData();
-        formData.append('name', name);
-        formData.append('lastname', lastname);
-        formData.append('role', role);
-        formData.append('status', status);
-
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', 'add_user.php', true);
-        xhr.onload = function () {
-            if (xhr.status >= 200 && xhr.status < 300) {
-
-                location.reload();
-            } else {   
-                console.error('Error adding user:', xhr.status, xhr.statusText);
-            }
-        };
-        xhr.send(formData);
-        $('#addUserModal').modal('hide');
-    }
+ 
     
     function updateUser(userId) {
     var nameInput = document.getElementById('editName' + userId);
@@ -398,6 +367,8 @@ $('#confirmDeleteBtn').click(function () {
 
                 var statusCircle = userRow.querySelector('.status-circle');
                 statusCircle.className = 'status-circle ' + (status === 'on' ? 'status-active' : 'status-inactive');
+                statusCircle.className = 'status-circle ' + (status === 'off' ? 'status-inactive' : 'status-active');
+           
 
                 $('#editModal' + userId).modal('hide');
             } else {
@@ -409,9 +380,90 @@ $('#confirmDeleteBtn').click(function () {
     };
     xhr.send(formData);
 }
-    
+function addUser() {
+    var nameInput = document.getElementById('addName');
+    var lastnameInput = document.getElementById('addLastname');
+    var roleSelect = document.getElementById('addRole');
+    var statusCheckbox = document.getElementById('addStatus');
+    var errorMessage = document.getElementById('errorMessage');
+
+    var name = nameInput.value.trim();
+    var lastname = lastnameInput.value.trim();
+    var role = roleSelect.value;
+    var status = statusCheckbox.checked ? 'on' : 'off';
+
+   
+    if (name === '' || lastname === '') {
+        errorMessage.textContent = 'Please enter both name and lastname.';
+        return; 
+    }
+
+   
+    errorMessage.textContent = '';
+
+    var formData = new FormData();
+    formData.append('name', name);
+    formData.append('lastname', lastname);
+    formData.append('role', role);
+    formData.append('status', status);
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', 'add_user.php', true);
+    xhr.onload = function () {
+        if (xhr.status >= 200 && xhr.status < 300) {
+            location.reload();
+        } else {
+            console.error('Error adding user:', xhr.status, xhr.statusText);
+        }
+    };
+    xhr.send(formData);
+    $('#addUserModal').modal('hide');
+}
+
     </script>
 
+<!-- модальное окно для добавления пользователя -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addUserModalLabel">Add User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addUserForm">
+                    <div class="mb-3">
+                        <label for="addName" class="form-label">First name</label>
+                        <input type="text" class="form-control" id="addName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="addLastname" class="form-label">Last name</label>
+                        <input type="text" class="form-control" id="addLastname" required>
+                    </div>
+                    <!-- Добавлен элемент для вывода сообщения об ошибке -->
+                    <div id="errorMessage" class="mb-3 text-danger"></div>
+                    <div class="mb-3">
+                        <label for="addRole" class="form-label">Role</label>
+                        <select class="form-select" id="addRole" required>
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="addStatus" class="form-label">Status</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="addStatus" checked>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="addUser()">Add User</button>
+            </div>
+        </div>
+    </div>
+</div>
 
      
 <!-- Модальное окно подтверждения удаления -->
@@ -434,47 +486,6 @@ $('#confirmDeleteBtn').click(function () {
     </div>
 
 
-<!-- модальное окно для добавления пользователя -->
-<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addUserModalLabel">Add  User</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="addUserForm">
-                    <div class="mb-3">
-                        <label for="addName" class="form-label">First name</label>
-                        <input type="text" class="form-control" id="addName" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="addLastname" class="form-label">Last name</label>
-                        <input type="text" class="form-control" id="addLastname" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="addRole" class="form-label">Role</label>
-                        <select class="form-select" id="addRole" required>
-                            <option value="user">User</option>
-                            <option value="admin">Admin</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="addStatus" class="form-label">Status</label>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="addStatus" checked>
-                            
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="addUser()">Add User</button>
-            </div>
-        </div>
-    </div>
-</div>
 
 
 <script>
