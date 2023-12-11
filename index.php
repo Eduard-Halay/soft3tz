@@ -203,7 +203,8 @@ $(document).ready(function () {
                 deleteUsers(selectedUserIds);
                 break;
             default:
-                console.error('Выбрано неверное действие');
+            showMessage('Please select the action');
+            return;
         }
     }
 
@@ -232,7 +233,8 @@ $(document).ready(function () {
                 deleteUsers(selectedUserIds2);
                 break;
             default:
-                console.error('Выбрано неверное действие');
+            showMessage('Please select the action');
+            return;
         }
     }
 });
