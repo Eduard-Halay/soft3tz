@@ -23,12 +23,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
            header('Content-Type: application/json');
             echo json_encode($userData);
         } else {
-            echo 'Error selecting user: ' . mysqli_error($induction);
+            echo '{status: false, error:{code: 101, message: "Error selecting user"}} . mysqli_error($induction)';
         }
     } else {
-        echo 'Error updating user: ' . mysqli_error($induction);
+        echo '{status: false, error:{code: 102, message: "Error updating user"}} . mysqli_error($induction)';
     }
 } else {
-    echo 'Invalid request';
+    echo '{status: false, error:{code: 103, message: "Invalid request"}}';
 }
 ?>
