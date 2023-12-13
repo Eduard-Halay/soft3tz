@@ -4,12 +4,12 @@ include "databases.php";
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $userId = $_POST['userId'];
 
-     $deleteQuery = mysqli_query($induction, "DELETE FROM `client` WHERE `id` = $userId");
+    $deleteQuery = mysqli_query($induction, "DELETE FROM `client` WHERE `id` = $userId");
 
-     if ($deleteQuery) {
-        echo 'User deleted successfully';
+    if ($deleteQuery) {
+        echo '{"status": true, "error": null, "message": "Error deleting user"}';
     } else {
-        echo 'Error deleting user';
+        echo '{"status": false, "error": {"code": 104, "message": "Error deleting user"}}';
     }
 }
 ?>
