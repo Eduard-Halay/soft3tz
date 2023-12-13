@@ -7,17 +7,24 @@ $result = mysqli_query($induction, "SELECT * FROM `client`");
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/k7ujTnHg4CGR2D7kSs0v4LLanw2qksYuRlEzO+tcaEPQogQ0KaoGN26/zrn20ImR1DfuLWnOo7aBA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-     <script src="https://code.jquery.com/jquery-3.6.4.min.js" integrity="sha384-UG8ao2jwOWB7/oDdObZc6ItJmwUkR/PfMyt9Qs5AwX7PsnYn1CRKCTWyncPTWvaS" crossorigin="anonymous"></script>
+    <title>admin</title>
 
+    <!-- Подключение Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+    <!-- Подключение Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/k7ujTnHg4CGR2D7kSs0v4LLanw2qksYuRlEzO+tcaEPQogQ0KaoGN26/zrn20ImR1DfuLWnOo7aBA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- Подключение jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js" integrity="sha384-UG8ao2jwOWB7/oDdObZc6ItJmwUkR/PfMyt9Qs5AwX7PsnYn1CRKCTWyncPTWvaS" crossorigin="anonymous"></script>
+
+    <!-- Подключение Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
 
     
     
-    <title>admin</title>
     <style>
         .status-circle {
             width: 20px;
@@ -49,7 +56,7 @@ $result = mysqli_query($induction, "SELECT * FROM `client`");
         <div class="row">
             <div class="col-md-9">
                 <div class="client">
-
+                
                     <h2>Users</h2>
 
                     <div class="mt-3 d-flex align-items-center">
@@ -203,7 +210,7 @@ $(document).ready(function () {
                 deleteUsers(selectedUserIds);
                 break;
             default:
-            showMessage('Please select the action');
+            showMessage('Please select the  action');
             return;
         }
     }
@@ -336,54 +343,8 @@ $('#confirmDeleteBtn').click(function () {
     }
  
     
-    function updateUser(userId) {
-    var nameInput = document.getElementById('editName' + userId);
-    var lastnameInput = document.getElementById('editLastname' + userId);
-    var statusCheckbox = document.getElementById('editStatus' + userId);
-    var roleSelect = document.getElementById('editRole' + userId);
 
-    if (!nameInput || !lastnameInput || !statusCheckbox || !roleSelect) {
-        console.error('Failed to find necessary elements for user with ID ' + userId);
-        return;
-    }
-
-    var name = nameInput.value;
-    var lastname = lastnameInput.value;
-    var status = statusCheckbox.checked ? 'on' : 'off'; // Получаем значение чекбокса
-    var role = roleSelect.value;
-
-    var formData = new FormData();
-    formData.append('userId', userId);
-    formData.append('name', name);
-    formData.append('lastname', lastname);
-    formData.append('status', status);
-    formData.append('role', role);
-
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', 'update_user.php', true);
-    xhr.onload = function () {
-        if (xhr.status >= 200 && xhr.status < 300) {
-            var userRow = document.querySelector('tr[data-user-id="' + userId + '"]');
-            if (userRow) {
-                userRow.querySelector('td:nth-child(2)').textContent = name + ' ' + lastname;
-                userRow.querySelector('td:nth-child(3)').textContent = role;
-
-                var statusCircle = userRow.querySelector('.status-circle');
-                statusCircle.className = 'status-circle ' + (status === 'on' ? 'status-active' : 'status-inactive');
-                statusCircle.className = 'status-circle ' + (status === 'off' ? 'status-inactive' : 'status-active');
-           
-
-                $('#editModal' + userId).modal('hide');
-            } else {
-                console.error('User row not found');
-            }
-        } else {
-            console.error('Error updating user:', xhr.status, xhr.statusText);
-        }
-    };
-    xhr.send(formData);
-}
-function addUser() {
+    function addUser() {
     var nameInput = document.getElementById('addName');
     var lastnameInput = document.getElementById('addLastname');
     var roleSelect = document.getElementById('addRole');
@@ -395,13 +356,11 @@ function addUser() {
     var role = roleSelect.value;
     var status = statusCheckbox.checked ? 'on' : 'off';
 
-   
     if (name === '' || lastname === '') {
-        errorMessage.textContent = 'Please enter both name and lastname.';
-        return; 
+        errorMessage.textContent = 'Please enter both your first and last name.';
+        return;
     }
 
-   
     errorMessage.textContent = '';
 
     var formData = new FormData();
@@ -410,31 +369,120 @@ function addUser() {
     formData.append('role', role);
     formData.append('status', status);
 
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', 'add_user.php', true);
-    xhr.onload = function () {
-        if (xhr.status >= 200 && xhr.status < 300) {
-            location.reload();
-        } else {
-            console.error('Error adding user:', xhr.status, xhr.statusText);
+    jQuery.ajax({
+        type: 'POST',
+        url: 'add_user.php',
+        data: formData,
+        processData: false,
+        contentType: false,
+        dataType: 'json',
+        success: function (response) {
+            var newRow = "<tr data-user-id='" + response.id + "'>";
+            newRow += "<td><input type='checkbox' class='selectCheckbox'></td>";
+            newRow += "<td>" + response.name + "&nbsp;" + response.lastname + "</td>";
+            newRow += "<td>" + response.role + "</td>";
+            newRow += "<td class='text-center align-middle'><div class='status-circle " + (response.status === 'on' ? 'status-active' : 'status-inactive') + "'></div></td>";
+            newRow += "<td class='text-center align-middle'>";
+            newRow += "<a href='#' class='btn border-dark btn-sm ms-1 btn-rounded' data-bs-toggle='modal' data-bs-target='#editModal" + response.id + "'><i class='fa-solid fa-pen-to-square'></i></a>";
+            newRow += "<a href='#' class='btn border-dark btn-sm me-1 btn-rounded deleteUserBtn'><i class='fas fa-trash-alt'></i></a>";
+            newRow += "</td>";
+            newRow += "</tr>";
+
+            jQuery('tbody').append(newRow);
+            jQuery('#addUserModal').modal('hide');
+        },
+        error: function (xhr, status, error) {
+            console.error('Ошибка при добавлении пользователя:', status, error);
+            console.error('Объект XHR:', xhr.responseText);
         }
+    });
+}
+
+
+    $(document).ready(function () {
+       
+        $('#addUserModal').on('hidden.bs.modal', function () {
+           
+            $('#addUserForm').trigger('reset');
+            $('#errorMessage').text(''); 
+        });
+
+        
+        $('#addUserButton').on('click', function () {
+            addUser();
+        });
+
+       
+    });
+
+  function showMessage(message) {
+            var messageBox = $('#messageBox');
+            messageBox.text(message);
+            messageBox.show();
+
+           
+            setTimeout(function () {
+                messageBox.hide();
+            }, 5000);
+        }
+
+    function updateUser(userId) {
+    var nameInput = $('#editName' + userId);
+    var lastnameInput = $('#editLastname' + userId);
+    var statusCheckbox = $('#editStatus' + userId);
+    var roleSelect = $('#editRole' + userId);
+
+    var name = nameInput.val();
+    var lastname = lastnameInput.val();
+    var status = statusCheckbox.prop('checked') ? 'on' : 'off';
+    var role = roleSelect.val();
+
+    var formData = {
+        userId: userId,
+        name: name,
+        lastname: lastname,
+        status: status,
+        role: role
     };
-    xhr.send(formData);
-    $('#addUserModal').modal('hide');
+
+    $.ajax({
+        type: 'POST',
+        url: 'update_user.php',
+        data: formData,
+        success: function (data) {
+            
+            var userRow = $('tr[data-user-id="' + userId + '"]');
+            if (userRow.length) {
+                userRow.find('td:nth-child(2)').text(name + ' ' + lastname);
+                userRow.find('td:nth-child(3)').text(role);
+
+                var statusCircle = userRow.find('.status-circle');
+                statusCircle.removeClass().addClass('status-circle ' + (status === 'on' ? 'status-active' : 'status-inactive'));
+
+               
+                var editModal = $('#editModal' + userId);
+                if (editModal.length) {
+                    editModal.modal('hide');
+                } else {
+                    console.error('Edit modal not found');
+                }
+            } else {
+                console.error('User row not found');
+            }
+        },
+        error: function (xhr, status, error) {
+           
+            console.error('Error updating user:', status, error);
+        },
+        complete: function () {
+           
+        }
+    });
 }
 
 
 
-function showMessage(message) {
-                var messageBox = $('#messageBox');
-                messageBox.text(message);
-                messageBox.show();
 
-                // Скрыть сообщение через 5 секунд
-                setTimeout(function () {
-                    messageBox.hide();
-                }, 5000);
-            }
     </script>
 
 <!-- модальное окно для добавления пользователя -->
@@ -455,7 +503,7 @@ function showMessage(message) {
                         <label for="addLastname" class="form-label">Last name</label>
                         <input type="text" class="form-control" id="addLastname" required>
                     </div>
-                    <!-- Добавлен элемент для вывода сообщения об ошибке -->
+                    <!--  элемент для вывода сообщения об ошибке -->
                     <div id="errorMessage" class="mb-3 text-danger"></div>
                     <div class="mb-3">
                         <label for="addRole" class="form-label">Role</label>
