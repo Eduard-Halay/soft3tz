@@ -41,9 +41,9 @@ $result = mysqli_query($induction, "SELECT * FROM `client`");
             background-color: gray;
         }
         .form-select{
-            width:180px;
-            padding-left: 10px;
-            padding-right: 30px;
+            width:160px;
+            padding-left: 20px;
+            padding-right: 20px;
         }
         .form-check-input:checked {
     background-color: #2ecc71; 
@@ -91,8 +91,10 @@ while ($bd = mysqli_fetch_assoc($result)) {
     echo "<tr data-user-id='{$userId}'>";
     echo "<td><input type='checkbox' class='selectCheckbox'></td>";
     echo "<td>{$bd['name']}&nbsp;{$bd['lastname']}</td>";
-    echo "<td>{$bd['role']}</td>";
-    $statusClass = ($bd['status'] == 'on') ? 'status-active' : 'status-inactive';
+    echo "<td>";
+echo ($bd['role'] == '1') ? 'admin' : 'user';
+echo "</td>";
+    $statusClass = ($bd['status'] == '1') ? 'status-active' : 'status-inactive';
     echo "<td class='text-center align-middle'><div class='status-circle {$statusClass}'></div></td>";
     echo "<td class='text-center align-middle'>";
     echo "<a href='#' class='btn border-dark btn-sm ms-1 btn-rounded editUserBtn' data-user-id='{$userId}'><i class='fas fa-pen-to-square'></i></a>";
@@ -123,7 +125,7 @@ while ($bd = mysqli_fetch_assoc($result)) {
     echo "            <label for='editStatus{$userId}' class='form-label'>Status</label>";
     echo "            <div class='form-check form-switch'>";
     echo "              <input class='form-check-input' type='checkbox' id='editStatus{$userId}'";
-    echo ($bd['status'] == 'on') ? " checked" : "";
+    echo ($bd['status'] == '1') ? " checked" : "";
     echo ">";
     echo "              <label class='form-check-label' for='editStatus{$userId}'></label>";
     echo "            </div>";
@@ -299,7 +301,7 @@ function createEditModal(userId, userData) {
     var form = $('<form id="editForm' + userId + '">');
     form.append('<div class="mb-3"><label for="editName' + userId + '" class="form-label">Name</label><input type="text" class="form-control" id="editName' + userId + '" value="' + userData.name + '"></div>');
     form.append('<div class="mb-3"><label for="editLastname' + userId + '" class="form-label">Lastname</label><input type="text" class="form-control" id="editLastname' + userId + '" value="' + userData.lastname + '"></div>');
-    form.append('<div class="mb-3"><label for="editStatus' + userId + '" class="form-label">Status</label><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="editStatus' + userId + '" ' + (userData.status === 'on' ? 'checked' : '') + '><label class="form-check-label" for="editStatus' + userId + '"></label></div></div>');
+    form.append('<div class="mb-3"><label for="editStatus' + userId + '" class="form-label">Status</label><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="editStatus' + userId + '" ' + (userData.status === '1' ? 'checked' : '') + '><label class="form-check-label" for="editStatus' + userId + '"></label></div></div>');
     form.append('<div class="mb-3"><label for="editRole' + userId + '" class="form-label">Role</label><select class="form-select" id="editRole' + userId + '"><option value="user" ' + (userData.role === 'user' ? 'selected' : '') + '>User</option><option value="admin" ' + (userData.role === 'admin' ? 'selected' : '') + '>Admin</option></select></div>');
     modal.find('.modal-body').append(form);
     
@@ -321,8 +323,11 @@ function addUser() {
 
     var name = nameInput.value.trim();
     var lastname = lastnameInput.value.trim();
-    var role = roleSelect.value;
-    var status = statusCheckbox.checked ? 'on' : 'off';
+    
+    // Получаем числовое значение роли
+    var role = (roleSelect.value === 'admin') ? 1 : 2;
+    
+    var status = statusCheckbox.checked ? '1' : '0';
 
     if (name === '' || lastname === '') {
         errorMessage.textContent = 'Please enter both your first and last name.';
@@ -348,8 +353,11 @@ function addUser() {
             var newRow = "<tr data-user-id='" + response.id + "'>";
             newRow += "<td><input type='checkbox' class='selectCheckbox'></td>";
             newRow += "<td>" + response.name + "&nbsp;" + response.lastname + "</td>";
-            newRow += "<td>" + response.role + "</td>";
-            newRow += "<td class='text-center align-middle'><div class='status-circle " + (response.status === 'on' ? 'status-active' : 'status-inactive') + "'></div></td>";
+            
+            // Отображаем текстовое значение роли
+            newRow += "<td>" + (role === 1 ? 'admin' : 'user') + "</td>";
+            
+            newRow += "<td class='text-center align-middle'><div class='status-circle " + (response.status === '1' ? 'status-active' : 'status-inactive') + "'></div></td>";
             newRow += "<td class='text-center align-middle'>";
             newRow += "<a href='#' class='btn border-dark btn-sm ms-1 btn-rounded editUserBtn' data-user-id='" + response.id + "'><i class='fas fa-pen-to-square'></i></a>";
             newRow += "<a href='#' class='btn border-dark btn-sm me-1 btn-rounded deleteUserBtn'><i class='fas fa-trash-alt'></i></a>";
@@ -359,7 +367,6 @@ function addUser() {
             jQuery('tbody').append(newRow);
             jQuery('#addUserModal').modal('hide');
 
-           
             var editModal = createEditModal(response.id, response);
             $('body').append(editModal);
         },
@@ -369,6 +376,7 @@ function addUser() {
         }
     });
 }
+
 
 
 function showMessage(message) {
@@ -404,9 +412,7 @@ function showEditModal(userId) {
     $('#editModal' + userId).modal('show');
 }
 
-
 function updateUser(userId) {
-   
     var nameInput = $('#editName' + userId);
     var lastnameInput = $('#editLastname' + userId);
     var statusCheckbox = $('#editStatus' + userId);
@@ -414,8 +420,10 @@ function updateUser(userId) {
 
     var name = nameInput.val();
     var lastname = lastnameInput.val();
-    var status = statusCheckbox.prop('checked') ? 'on' : 'off';
-    var role = roleSelect.val();
+    var status = statusCheckbox.prop('checked') ? '1' : '0';
+    
+    // Получаем числовое значение роли
+    var role = (roleSelect.val() === 'admin') ? 1 : 2;
 
     var formData = {
         userId: userId,
@@ -433,10 +441,12 @@ function updateUser(userId) {
             var userRow = $('tr[data-user-id="' + userId + '"]');
             if (userRow.length) {
                 userRow.find('td:nth-child(2)').text(name + ' ' + lastname);
-                userRow.find('td:nth-child(3)').text(role);
+                
+                // Отображаем текстовое значение роли
+                userRow.find('td:nth-child(3)').text((role === 1) ? 'admin' : 'user');
 
                 var statusCircle = userRow.find('.status-circle');
-                statusCircle.removeClass().addClass('status-circle ' + (status === 'on' ? 'status-active' : 'status-inactive'));
+                statusCircle.removeClass().addClass('status-circle ' + (status === '1' ? 'status-active' : 'status-inactive'));
 
                 var editModal = $('#editModal' + userId);
                 if (editModal.length) {
@@ -456,6 +466,7 @@ function updateUser(userId) {
         }
     });
 }
+
 </script>
 
 
@@ -501,10 +512,10 @@ $(document).ready(function () {
 
         switch (selectedAction) {
             case 'activate':
-                updateStatus(selectedUserIds, 'on');
+                updateStatus(selectedUserIds, '1');
                 break;
             case 'deactivate':
-                updateStatus(selectedUserIds, 'off');
+                updateStatus(selectedUserIds, '0');
                 break;
             case 'delete':
                 deleteUsers(selectedUserIds);
@@ -531,10 +542,10 @@ $(document).ready(function () {
 
         switch (selectedAction2) {
             case 'activate':
-                updateStatus(selectedUserIds2, 'on');
+                updateStatus(selectedUserIds2, '1');
                 break;
             case 'deactivate':
-                updateStatus(selectedUserIds2, 'off');
+                updateStatus(selectedUserIds2, '0');
                 break;
             case 'delete':
                 deleteUsers(selectedUserIds2);
@@ -633,7 +644,7 @@ $(document).ready(function () {
                 dataType: 'json',
                 success: function (response) {
                     if (response && response.status !== undefined) {
-                        statusCircle.css('background-color', response.status === 'on' ? 'green' : 'gray');
+                        statusCircle.css('background-color', response.status === '1' ? 'green' : 'gray');
                     } else {
                         console.error('Invalid response format:', response);
                     }
