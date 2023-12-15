@@ -61,7 +61,7 @@ $result = mysqli_query($induction, "SELECT * FROM `client`");
 
                     <div class="mt-3 d-flex align-items-center">
                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">Add</button>
-                     <select class="form-select rounded" id="actionSelect">
+                     <select class="form-select rounded" id="actionSelect" style="margin-right: 10px;margin-left: 10px;">
                         <option class='activ'>-Please-Select-</option>
                         <option value="activate">Set Active</option>
                          <option value="deactivate">Set Not active</option>
@@ -133,8 +133,9 @@ echo "</td>";
     echo "          <div class='mb-3'>";
     echo "            <label for='editRole{$userId}' class='form-label'>Role</label>";
     echo "            <select class='form-select' id='editRole{$userId}'>";
-   echo "<option value='2' " . (($bd['role'] == '2') ? 'selected' : '') . ">User</option>";
-echo "<option value='1' " . (($bd['role'] == '1') ? 'selected' : '') . ">Admin</option>";
+    echo "<option value='2' " . (($bd['role'] == '2') ? 'selected' : '') . ">User</option>";
+    echo "<option value='1' " . (($bd['role'] == '1') ? 'selected' : '') . ">Admin</option>";
+    
     echo "            </select>";
     echo "          </div>";
     echo "        </form>";
@@ -152,9 +153,9 @@ echo "<option value='1' " . (($bd['role'] == '1') ? 'selected' : '') . ">Admin</
 </tbody>
 </table>
 
-                    <div class="mt-3 d-flex align-items-center">
+                    <div class="mb-3 d-flex align-items-center">
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">Add</button>
-                        <select class="form-select" id="actionSelect2">
+                        <select class="form-select" id="actionSelect2" style="margin-right: 10px;margin-left: 10px;">
                             <option class='activ'>-Please-Select-</option>
                             <option value="activate">Set Active</option>
                             <option value="deactivate">Set Not Active</option>
@@ -583,19 +584,20 @@ $(document).ready(function () {
                     </div>
                     <!--  элемент для вывода сообщения об ошибке -->
                     <div id="errorMessage" class="mb-3 text-danger"></div>
-                    <div class="mb-3">
+                      <div class="mb-3">
+                        <label for="addStatus" class="form-label">Status</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="addStatus" checked>
+                        </div>
+                       </div>
+                     <div class="mb-3">
                         <label for="addRole" class="form-label">Role</label>
                         <select class="form-select" id="addRole" required>
                             <option value="user">User</option>
                             <option value="admin">Admin</option>
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label for="addStatus" class="form-label">Status</label>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="addStatus" checked>
-                        </div>
-                    </div>
+                    
                 </form>
             </div>
             <div class="modal-footer">
