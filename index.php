@@ -303,7 +303,7 @@ function createEditModal(userId, userData) {
     form.append('<div class="mb-3"><label for="editName' + userId + '" class="form-label">Name</label><input type="text" class="form-control" id="editName' + userId + '" value="' + userData.name + '"></div>');
     form.append('<div class="mb-3"><label for="editLastname' + userId + '" class="form-label">Lastname</label><input type="text" class="form-control" id="editLastname' + userId + '" value="' + userData.lastname + '"></div>');
     form.append('<div class="mb-3"><label for="editStatus' + userId + '" class="form-label">Status</label><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="editStatus' + userId + '" ' + (userData.status === '1' ? 'checked' : '') + '><label class="form-check-label" for="editStatus' + userId + '"></label></div></div>');
-    form.append('<div class="mb-3"><label for="editRole' + userId + '" class="form-label">Role</label><select class="form-select" id="editRole' + userId + '"><option value="user" ' + (userData.role === 'user' ? 'selected' : '') + '>User</option><option value="admin" ' + (userData.role === 'admin' ? 'selected' : '') + '>Admin</option></select></div>');
+    form.append('<div class="mb-3"><label for="editRole' + userId + '" class="form-label">Role</label><select class="form-select" id="editRole' + userId + '"><option value="user" ' + (userData.role === '2' ? 'selected' : '') + '>User</option><option value="admin" ' + (userData.role === '1' ? 'selected' : '') + '>Admin</option></select></div>');
     modal.find('.modal-body').append(form);
     
     
