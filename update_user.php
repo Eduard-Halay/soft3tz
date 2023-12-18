@@ -6,7 +6,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = $_POST['name'];
     $lastname = $_POST['lastname'];
     $status = $_POST['status'];
-    $role = $_POST['role'];
+    $role = intval($_POST['role']);
 
     
     $updateQuery = "UPDATE `client` SET `name`='$name', `lastname`='$lastname', `status`='$status', `role`='$role' WHERE `id`='$userId'";
