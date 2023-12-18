@@ -92,8 +92,8 @@ while ($bd = mysqli_fetch_assoc($result)) {
     echo "<td><input type='checkbox' class='selectCheckbox'></td>";
     echo "<td>{$bd['name']}&nbsp;{$bd['lastname']}</td>";
     echo "<td>";
-echo ($bd['role'] == '1') ? 'admin' : 'user';
-echo "</td>";
+    echo ($bd['role'] == '1') ? 'admin' : 'user';
+    echo "</td>";
     $statusClass = ($bd['status'] == '1') ? 'status-active' : 'status-inactive';
     echo "<td class='text-center align-middle'><div class='status-circle {$statusClass}'></div></td>";
     echo "<td class='text-center align-middle'>";
@@ -135,7 +135,6 @@ echo "</td>";
     echo "            <select class='form-select' id='editRole{$userId}'>";
     echo "<option value='2' " . (($bd['role'] == '2') ? 'selected' : '') . ">User</option>";
     echo "<option value='1' " . (($bd['role'] == '1') ? 'selected' : '') . ">Admin</option>";
-    
     echo "            </select>";
     echo "          </div>";
     echo "        </form>";
@@ -149,6 +148,7 @@ echo "</td>";
     echo "</div>";
 }
 ?>
+
 
 </tbody>
 </table>
@@ -303,7 +303,7 @@ function createEditModal(userId, userData) {
     form.append('<div class="mb-3"><label for="editName' + userId + '" class="form-label">Name</label><input type="text" class="form-control" id="editName' + userId + '" value="' + userData.name + '"></div>');
     form.append('<div class="mb-3"><label for="editLastname' + userId + '" class="form-label">Lastname</label><input type="text" class="form-control" id="editLastname' + userId + '" value="' + userData.lastname + '"></div>');
     form.append('<div class="mb-3"><label for="editStatus' + userId + '" class="form-label">Status</label><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="editStatus' + userId + '" ' + (userData.status === '1' ? 'checked' : '') + '><label class="form-check-label" for="editStatus' + userId + '"></label></div></div>');
-    form.append('<div class="mb-3"><label for="editRole' + userId + '" class="form-label">Role</label><select class="form-select" id="editRole' + userId + '"><option value="user" ' + (userData.role === '2' ? 'selected' : '') + '>User</option><option value="admin" ' + (userData.role === '1' ? 'selected' : '') + '>Admin</option></select></div>');
+    form.append('<div class="mb-3"><label for="editRole' + userId + '" class="form-label">Role</label><select class="form-select" id="editRole' + userId + '"><option value="2" ' + (userData.role === '2' ? 'selected' : '') + '>User</option><option value="1" ' + (userData.role === '1' ? 'selected' : '') + '>Admin</option></select></div>');
     modal.find('.modal-body').append(form);
     
     
@@ -326,7 +326,8 @@ function addUser() {
     var lastname = lastnameInput.value.trim();
     
     // Получаем числовое значение роли
-    var role = (roleSelect.value === 'admin') ? 1 : 2;
+    var role = (roleSelect.value === 'admin' || roleSelect.value === '1') ? 1 : 2;
+
     
     var status = statusCheckbox.checked ? '1' : '0';
 
@@ -355,7 +356,7 @@ function addUser() {
             newRow += "<td><input type='checkbox' class='selectCheckbox'></td>";
             newRow += "<td>" + response.name + "&nbsp;" + response.lastname + "</td>";
             
-            // Отображаем текстовое значение роли
+            // Отображаем числовое значение роли
             newRow += "<td>" + (role === 1 ? 'admin' : 'user') + "</td>";
             
             newRow += "<td class='text-center align-middle'><div class='status-circle " + (response.status === '1' ? 'status-active' : 'status-inactive') + "'></div></td>";
@@ -377,6 +378,7 @@ function addUser() {
         }
     });
 }
+
 
 
 
@@ -413,6 +415,7 @@ function showEditModal(userId) {
     $('#editModal' + userId).modal('show');
 }
 
+
 function updateUser(userId) {
     var nameInput = $('#editName' + userId);
     var lastnameInput = $('#editLastname' + userId);
@@ -424,34 +427,40 @@ function updateUser(userId) {
     var status = statusCheckbox.prop('checked') ? '1' : '0';
     
     // Получаем числовое значение роли
-    var role = (roleSelect.val() === 'admin') ? 1 : 2;
+    
+    var role = roleSelect.val() === '1' ? '1' : '2';
 
-    var formData = {
-        userId: userId,
-        name: name,
-        lastname: lastname,
-        status: status,
-        role: role
-    };
+
+  
+
+    var formData = new FormData();
+    formData.append('userId', userId);
+    formData.append('name', name);
+    formData.append('lastname', lastname);
+    formData.append('status', status);
+    formData.append('role', role);
+
+   
 
     $.ajax({
         type: 'POST',
-        url: 'update_user.php',
-        data: formData,
+    url: 'update_user.php',
+    data: formData,
+    processData: false,
+    contentType: false,
         success: function (data) {
+            
+
             var userRow = $('tr[data-user-id="' + userId + '"]');
             if (userRow.length) {
                 userRow.find('td:nth-child(2)').text(name + ' ' + lastname);
-                
-                // Отображаем текстовое значение роли
-                userRow.find('td:nth-child(3)').text((role === 1) ? 'admin' : 'user');
+                userRow.find('td:nth-child(3)').text((role === '1') ? 'admin' : 'user'); // Уточнение здесь
 
                 var statusCircle = userRow.find('.status-circle');
                 statusCircle.removeClass().addClass('status-circle ' + (status === '1' ? 'status-active' : 'status-inactive'));
 
                 var editModal = $('#editModal' + userId);
                 if (editModal.length) {
-                    // Проверка наличия модального окна перед его скрытием
                     editModal.modal('hide');
                 } else {
                     console.error('Edit modal not found');
@@ -467,6 +476,8 @@ function updateUser(userId) {
         }
     });
 }
+
+
 
 </script>
 
@@ -593,8 +604,8 @@ $(document).ready(function () {
                      <div class="mb-3">
                         <label for="addRole" class="form-label">Role</label>
                         <select class="form-select" id="addRole" required>
-                            <option value="user">User</option>
-                            <option value="admin">Admin</option>
+                            <option value="2">User</option>
+                            <option value="1">Admin</option>
                         </select>
                     </div>
                     
