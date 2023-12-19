@@ -264,6 +264,7 @@ $('#confirmDeleteBtn').click(function () {
     $('#deleteConfirmationModal').modal('hide');
 });
 
+
 function deleteUser(userId) {
     var formData = new FormData();
     formData.append('userId', userId);
@@ -276,19 +277,35 @@ function deleteUser(userId) {
         contentType: false,
         dataType: 'json',
         success: function () {
+            // Явная проверка наличия пользователя перед удалением
             var userRow = $('tr[data-user-id="' + userId + '"]');
             if (userRow.length) {
                 userRow.remove();
             } else {
-                console.error('User row not found');
+                console.error('User with id ' + userId + ' not found');
+                showMessage('User with id ' + userId + ' not found. The changes you entered are saved; to see them, refresh the page.');
             }
         },
         error: function (xhr, status, error) {
             console.error('Error deleting user:', status, error);
             console.error('XHR object:', xhr.responseText);
+            showMessage('Error deleting user. Please try again.');
         }
     });
 }
+
+
+function showMessage(message) {
+    var messageBox = $('#messageBox');
+    messageBox.text(message);
+    messageBox.show();
+
+    setTimeout(function () {
+        messageBox.hide();
+    }, 5000);
+}
+
+
 function createEditModal(userId, userData) {
    
     var modal = $('<div class="modal fade" id="editModal' + userId + '" tabindex="-1" aria-labelledby="editModalLabel' + userId + '" aria-hidden="true">');
@@ -314,7 +331,7 @@ function createEditModal(userId, userData) {
 
     return modal;
 }
- 
+
 function addUser() {
     var nameInput = document.getElementById('addName');
     var lastnameInput = document.getElementById('addLastname');
@@ -382,15 +399,8 @@ function addUser() {
 
 
 
-function showMessage(message) {
-    var messageBox = $('#messageBox');
-    messageBox.text(message);
-    messageBox.show();
 
-    setTimeout(function () {
-        messageBox.hide();
-    }, 5000);
-}
+
 
 $(document).ready(function () {
     $('#addUserModal').on('hidden.bs.modal', function () {
@@ -415,7 +425,6 @@ function showEditModal(userId) {
     $('#editModal' + userId).modal('show');
 }
 
-
 function updateUser(userId) {
     var nameInput = $('#editName' + userId);
     var lastnameInput = $('#editLastname' + userId);
@@ -425,13 +434,7 @@ function updateUser(userId) {
     var name = nameInput.val();
     var lastname = lastnameInput.val();
     var status = statusCheckbox.prop('checked') ? '1' : '0';
-    
-    // Получаем числовое значение роли
-    
     var role = roleSelect.val() === '1' ? '1' : '2';
-
-
-  
 
     var formData = new FormData();
     formData.append('userId', userId);
@@ -440,44 +443,111 @@ function updateUser(userId) {
     formData.append('status', status);
     formData.append('role', role);
 
-   
-
     $.ajax({
         type: 'POST',
-    url: 'update_user.php',
-    data: formData,
-    processData: false,
-    contentType: false,
-        success: function (data) {
-            
-
-            var userRow = $('tr[data-user-id="' + userId + '"]');
-            if (userRow.length) {
-                userRow.find('td:nth-child(2)').text(name + ' ' + lastname);
-                userRow.find('td:nth-child(3)').text((role === '1') ? 'admin' : 'user'); // Уточнение здесь
-
-                var statusCircle = userRow.find('.status-circle');
-                statusCircle.removeClass().addClass('status-circle ' + (status === '1' ? 'status-active' : 'status-inactive'));
-
-                var editModal = $('#editModal' + userId);
-                if (editModal.length) {
-                    editModal.modal('hide');
-                } else {
-                    console.error('Edit modal not found');
-                }
-            } else {
-                console.error('User row not found');
-            }
+        url: 'update_user.php',
+        data: formData,
+        processData: false,
+        contentType: false,
+        dataType: 'json', 
+        success: function (response) {
+            handleUpdateSuccess(userId, response, statusCheckbox); // передаем statusCheckbox в функцию обработки успешного обновления
         },
         error: function (xhr, status, error) {
-            console.error('Error updating user:', status, error);
+            handleUpdateError(xhr, status, error);
         },
         complete: function () {
+            // Добавлен код, который выполнится независимо от успешного или неудачного запроса
         }
     });
 }
 
+function handleUpdateSuccess(userId, response, statusCheckbox) {
+    var userRow = $('tr[data-user-id="' + userId + '"]');
+    
+    if (userRow.length) {
+        if (response !== null && typeof response === 'object' && response.hasOwnProperty('name') && response.hasOwnProperty('lastname') && response.hasOwnProperty('role') && response.hasOwnProperty('status')) {
+            userRow.find('td:nth-child(2)').text(response.name + ' ' + response.lastname);
+            userRow.find('td:nth-child(3)').text(response.role === '1' ? 'admin' : 'user');
 
+            var statusCircle = userRow.find('.status-circle');
+            statusCircle.removeClass().addClass('status-circle ' + (response.status === '1' ? 'status-active' : 'status-inactive'));
+
+            // Скрыть модальное окно
+            hideEditModal(userId);
+        } else {
+            console.error('Invalid response format or null:', response);
+
+            // Получаем значения из модального окна
+            var newName = $('#editName' + userId).val();
+            var newLastname = $('#editLastname' + userId).val();
+            var newRole = $('#editRole' + userId).val();
+            var newStatus = $('#editStatus' + userId).val();
+
+            // Попытка создания нового пользователя
+            addUserWithDetails(newName, newLastname, newRole, newStatus, userId, statusCheckbox);
+
+            // Закрываем модальное окно
+            hideEditModal(userId);
+
+            // Показываем сообщение об ошибке
+            showMessage('There is no object with this id, the changes you entered are saved to see them, refresh the page');
+        }
+    } else {
+        console.error('User row not found');
+    }
+}
+
+function addUserWithDetails(name, lastname, role, status, userId, statusCheckbox) {
+    var formData = new FormData();
+
+    if (userId) {
+        formData.append('userId', userId);
+    }
+
+    formData.append('name', name);
+    formData.append('lastname', lastname);
+    formData.append('role', role);
+    
+    // Используйте statusCheckbox.prop('checked') для получения состояния чекбокса
+    formData.append('status', statusCheckbox.prop('checked') ? '1' : '0');
+
+    $.ajax({
+        type: 'POST',
+        url: 'add_user.php',
+        data: formData,
+        processData: false,
+        contentType: false,
+        dataType: 'json',
+        success: function (response) {
+            // Обработка успешного создания пользователя
+            handleAddUserSuccess(response);
+        },
+        error: function (xhr, status, error) {
+            // Обработка ошибки при создании пользователя
+            handleAddUserError(xhr, status, error);
+        }
+    });
+}
+
+function hideEditModal(userId) {
+    var editModal = $('#editModal' + userId);
+    if (editModal.length) {
+        // Скрыть модальное окно
+        editModal.modal('hide');
+    } else {
+        console.error('Edit modal not found');
+    }
+}
+
+function handleAddUserSuccess(response) {
+    // Проверка на наличие свойства 'id' в объекте response
+    if (response !== null && typeof response === 'object' && response.hasOwnProperty('id')) {
+        // Обработка успешного добавления пользователя
+    } else {
+        console.error('Invalid response format or null:', response);
+    }
+}
 
 </script>
 
