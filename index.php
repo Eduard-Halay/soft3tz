@@ -169,34 +169,190 @@ while ($bd = mysqli_fetch_assoc($result)) {
       
 
     
-                    <script>
-// Checkbox
+                    <script>function updateStatus(userIds, newStatus) {
+    var errors = [];
+
+    userIds.forEach(function (userId) {
+        var statusCircle = $('tr[data-user-id="' + userId + '"] .status-circle');
+
+        // Проверяем наличие пользователя с заданным userId
+        var userRow = $('tr[data-user-id="' + userId + '"]');
+        if (!userRow.length) {
+            console.error('User with id ' + userId + ' not found');
+            errors.push({ userId: userId, error: 'User not found' });
+            return;
+        }
+
+        $.ajax({
+            type: 'POST',
+            url: 'update_status.php',
+            data: { userId: userId, newStatus: newStatus },
+            cache: false,
+            dataType: 'json',
+            success: function (response) {
+                if (response && response.status !== undefined) {
+                    if (response.status === null) {
+                        console.error('Error updating status:', 'Status is null');
+                        errors.push({ userId: userId, error: 'Error updating status' });
+                    } else {
+                        statusCircle.css('background-color', response.status === '1' ? 'green' : 'gray');
+                    }
+                } else {
+                    console.error('Invalid response format:', response);
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('Error updating status:', status, error);
+                console.error('XHR object:', xhr.responseText);
+                console.error('User ID:', userId);
+                errors.push({ userId: userId, error: 'Error updating status' });
+            },
+            complete: function () {
+                // Добавьте здесь код, который выполнится независимо от успешного или неудачного запроса
+            }
+        });
+    });
+
+    if (errors.length > 0) {
+        return { success: false, errors: errors };
+    } else {
+        return { success: true, status: newStatus };
+    }
+}
+
+
+
+function deleteUsers(userIds) {
+    $('#deleteConfirmationModal').modal('show');
+    $('#deleteConfirmationModal').data('user-ids', userIds);
+}
+
 $(document).ready(function () {
+
+    $('#selectAllCheckbox').on('change', function () {
+    var isChecked = $(this).prop('checked');
+    $('.selectCheckbox').prop('checked', isChecked);
+    updateStatusCheckboxes();
+});
+
+
+
+
+
+
     var selectAllCheckbox = $('#selectAllCheckbox');
     var checkboxes = $('.selectCheckbox');
 
-    selectAllCheckbox.change(function () {
-        checkboxes.prop('checked', this.checked);
-    });
-
-    checkboxes.change(function () {
+    $('body').on('change', '.selectCheckbox', function () {
         var allChecked = true;
-        checkboxes.each(function () {
+        $('.selectCheckbox').each(function () {
             if (!this.checked) {
                 allChecked = false;
-                return false; 
+                return false;
             }
         });
 
         selectAllCheckbox.prop('checked', allChecked);
     });
 
-    $('.editUserBtn').click(function () {
-        var userId = $(this).data('user-id');
-       
-        showEditModal(userId);
+    $('#applyChangesButton').on('click', applyChanges);
+    $('#applyChangesButton2').on('click', applyChanges2);
+
+    function applyChanges() {
+        var actionSelect = document.getElementById('actionSelect');
+        var selectedAction = actionSelect.value;
+
+        var selectedUserIds = [];
+        $('.selectCheckbox:checked').each(function () {
+            selectedUserIds.push($(this).closest('tr').data('user-id'));
+        });
+
+        if (selectedUserIds.length === 0) {
+            showMessage('Please select at least one user.');
+            return;
+        }
+
+        switch (selectedAction) {
+            case 'activate':
+                updateStatus(selectedUserIds, '1');
+                break;
+            case 'deactivate':
+                updateStatus(selectedUserIds, '0');
+                break;
+            case 'delete':
+                deleteUsers(selectedUserIds);
+                break;
+            default:
+                showMessage('Please select the action');
+                return;
+        }
+    }
+
+    function applyChanges2() {
+        var actionSelect2 = document.getElementById('actionSelect2');
+        var selectedAction2 = actionSelect2.value;
+
+        var selectedUserIds2 = [];
+        $('.selectCheckbox:checked').each(function () {
+            selectedUserIds2.push($(this).closest('tr').data('user-id'));
+        });
+
+        if (selectedUserIds2.length === 0) {
+            showMessage('Please select at least one user.');
+            return;
+        }
+
+        switch (selectedAction2) {
+            case 'activate':
+                updateStatus(selectedUserIds2, '1');
+                break;
+            case 'deactivate':
+                updateStatus(selectedUserIds2, '0');
+                break;
+            case 'delete':
+                deleteUsers(selectedUserIds2);
+                break;
+            default:
+                showMessage('Please select the action');
+                return;
+        }
+    }
+
+    var selectAllCheckbox = $('#selectAllCheckbox');
+    var checkboxes = $('.selectCheckbox');
+
+    selectAllCheckbox.change(function () {
+    checkboxes.prop('checked', this.checked);
+    updateStatusCheckboxes();
+});
+
+checkboxes.change(function () {
+    updateSelectAllCheckbox();
+});
+
+// Добавьте следующий обработчик события для вновь добавленных чекбоксов
+$('body').on('change', '.selectCheckbox', function () {
+    updateSelectAllCheckbox();
+});
+
+function updateSelectAllCheckbox() {
+    selectAllCheckbox.prop('checked', checkboxes.length === checkboxes.filter(':checked').length);
+}
+
+function updateStatusCheckboxes() {
+    var checkedUserIds = [];
+    $('.selectCheckbox:checked').each(function () {
+        checkedUserIds.push($(this).closest('tr').data('user-id'));
     });
 
+}
+
+
+
+    $('.editUserBtn').click(function () {
+        var userId = $(this).data('user-id');
+        showEditModal(userId);
+    });
 
     $('#saveChangesBtn').click(function () {
     });
@@ -204,7 +360,6 @@ $(document).ready(function () {
     $('.deleteUserBtn').click(function () {
         var userId = $(this).closest('tr').data('user-id');
         var userName = $(this).closest('tr').find('td:eq(0)').text(); 
-
         var userLastname = $(this).closest('tr').find('td:eq(1)').length > 0
             ? $(this).closest('tr').find('td:eq(1)').text()
             : '';
@@ -233,21 +388,14 @@ $(document).ready(function () {
 
 });
 
-
 $('body').on('click', '.deleteUserBtn', function () {
     var userId = $(this).closest('tr').data('user-id');
-
-  
     var userName = $(this).closest('tr').find('td:eq(0)').text();
     var userLastname = $(this).closest('tr').find('td:eq(1)').length > 0
         ? $(this).closest('tr').find('td:eq(1)').text()
         : '';
     $('#deleteConfirmationBody').html('Are you sure you want to delete ' + userName + ' ' + userLastname + '?');
-
-   
     $('#deleteConfirmationModal').data('user-ids', [userId]);
-
-   
     $('#deleteConfirmationModal').modal('show');
 });
 
@@ -516,93 +664,6 @@ function hideEditModal(userId) {
 
 
 
-<script>
-$(document).ready(function () {
-    var selectAllCheckbox = $('#selectAllCheckbox');
-    var checkboxes = $('.selectCheckbox');
-
-    selectAllCheckbox.change(function () {
-        checkboxes.prop('checked', this.checked);
-    });
-
-    checkboxes.change(function () {
-        var allChecked = true;
-        checkboxes.each(function () {
-            if (!this.checked) {
-                allChecked = false;
-                return false;
-            }
-        });
-
-        selectAllCheckbox.prop('checked', allChecked);
-    });
-
-    $('#applyChangesButton').on('click', applyChanges);
-
-    $('#applyChangesButton2').on('click', applyChanges2);
-
-    function applyChanges() {
-        var actionSelect = document.getElementById('actionSelect');
-        var selectedAction = actionSelect.value;
-
-        var selectedUserIds = [];
-        $('.selectCheckbox:checked').each(function () {
-            selectedUserIds.push($(this).closest('tr').data('user-id'));
-        });
-
-        if (selectedUserIds.length === 0) {
-            showMessage('Please select at least one user.');
-            return;
-        }
-
-        switch (selectedAction) {
-            case 'activate':
-                updateStatus(selectedUserIds, '1');
-                break;
-            case 'deactivate':
-                updateStatus(selectedUserIds, '0');
-                break;
-            case 'delete':
-                deleteUsers(selectedUserIds);
-                break;
-            default:
-            showMessage('Please select the  action');
-            return;
-        }
-    }
-
-    function applyChanges2() {
-        var actionSelect2 = document.getElementById('actionSelect2');
-        var selectedAction2 = actionSelect2.value;
-
-        var selectedUserIds2 = [];
-        $('.selectCheckbox:checked').each(function () {
-            selectedUserIds2.push($(this).closest('tr').data('user-id'));
-        });
-
-        if (selectedUserIds2.length === 0) {
-            showMessage('Please select at least one user.');
-            return;
-        }
-
-        switch (selectedAction2) {
-            case 'activate':
-                updateStatus(selectedUserIds2, '1');
-                break;
-            case 'deactivate':
-                updateStatus(selectedUserIds2, '0');
-                break;
-            case 'delete':
-                deleteUsers(selectedUserIds2);
-                break;
-            default:
-            showMessage('Please select the action');
-            return;
-        }
-    }
-});
-
-    </script>
 
             </div>
         </div>
@@ -675,46 +736,5 @@ $(document).ready(function () {
 
 
 
-<script>
-     
-      function updateStatus(userIds, newStatus) {
-        userIds.forEach(function (userId) {
-            var statusCircle = $('tr[data-user-id="' + userId + '"] .status-circle');
-
-            
-            $.ajax({
-                type: 'POST',
-                url: 'update_status.php',
-                data: { userId: userId, newStatus: newStatus },
-                cache: false,
-                dataType: 'json',
-                success: function (response) {
-                    if (response && response.status !== undefined) {
-                        statusCircle.css('background-color', response.status === '1' ? 'green' : 'gray');
-                    } else {
-                        console.error('Invalid response format:', response);
-                    }
-                },
-                error: function (xhr, status, error) {
-                    console.error('Error updating status:', status, error);   
-                    console.error('XHR object:', xhr.responseText);
-                },
-                complete: function () {
-                   
-                }
-            });
-        });
-    }
-
-    // Функция удаления пользователей
-    function deleteUsers(userIds) {
-        
-        $('#deleteConfirmationModal').modal('show');
-
-      
-        $('#deleteConfirmationModal').data('user-ids', userIds);
-    }
-    
-</script>
 </body>
 </html>
