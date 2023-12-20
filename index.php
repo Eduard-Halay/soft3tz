@@ -426,6 +426,12 @@ function showEditModal(userId) {
 }
 
 function updateUser(userId) {
+    var userRow = $('tr[data-user-id="' + userId + '"]');
+    if (!userRow.length) {
+        showMessage('There is no object with this id', 'error');
+        return;
+    }
+
     var nameInput = $('#editName' + userId);
     var lastnameInput = $('#editLastname' + userId);
     var statusCheckbox = $('#editStatus' + userId);
@@ -449,9 +455,9 @@ function updateUser(userId) {
         data: formData,
         processData: false,
         contentType: false,
-        dataType: 'json', 
+        dataType: 'json',
         success: function (response) {
-            handleUpdateSuccess(userId, response, statusCheckbox); // передаем statusCheckbox в функцию обработки успешного обновления
+            handleUpdateSuccess(userId, response, statusCheckbox);
         },
         error: function (xhr, status, error) {
             handleUpdateError(xhr, status, error);
@@ -473,81 +479,38 @@ function handleUpdateSuccess(userId, response, statusCheckbox) {
             var statusCircle = userRow.find('.status-circle');
             statusCircle.removeClass().addClass('status-circle ' + (response.status === '1' ? 'status-active' : 'status-inactive'));
 
-            // Скрыть модальное окно
             hideEditModal(userId);
         } else {
             console.error('Invalid response format or null:', response);
-
-            // Получаем значения из модального окна
-            var newName = $('#editName' + userId).val();
-            var newLastname = $('#editLastname' + userId).val();
-            var newRole = $('#editRole' + userId).val();
-            var newStatus = $('#editStatus' + userId).val();
-
-            // Попытка создания нового пользователя
-            addUserWithDetails(newName, newLastname, newRole, newStatus, userId, statusCheckbox);
-
-            // Закрываем модальное окно
+            showMessage('There is no object with this id,  refresh the page', 'error');
+            response = {
+                error: 'Invalid response format or null'
+            };
             hideEditModal(userId);
-
-            // Показываем сообщение об ошибке
-            showMessage('There is no object with this id, the changes you entered are saved to see them, refresh the page');
         }
     } else {
         console.error('User row not found');
     }
 }
 
-function addUserWithDetails(name, lastname, role, status, userId, statusCheckbox) {
-    var formData = new FormData();
-
-    if (userId) {
-        formData.append('userId', userId);
+function handleUpdateError(xhr, status, error) {
+    if (xhr.status === 404) {
+        showMessage('There is no object with this id', 'error');
+    } else {
+        console.error('Update failed. Status:', status, 'Error:', error);
     }
-
-    formData.append('name', name);
-    formData.append('lastname', lastname);
-    formData.append('role', role);
-    
-    // Используйте statusCheckbox.prop('checked') для получения состояния чекбокса
-    formData.append('status', statusCheckbox.prop('checked') ? '1' : '0');
-
-    $.ajax({
-        type: 'POST',
-        url: 'add_user.php',
-        data: formData,
-        processData: false,
-        contentType: false,
-        dataType: 'json',
-        success: function (response) {
-            // Обработка успешного создания пользователя
-            handleAddUserSuccess(response);
-        },
-        error: function (xhr, status, error) {
-            // Обработка ошибки при создании пользователя
-            handleAddUserError(xhr, status, error);
-        }
-    });
 }
 
 function hideEditModal(userId) {
     var editModal = $('#editModal' + userId);
     if (editModal.length) {
-        // Скрыть модальное окно
         editModal.modal('hide');
     } else {
         console.error('Edit modal not found');
     }
 }
 
-function handleAddUserSuccess(response) {
-    // Проверка на наличие свойства 'id' в объекте response
-    if (response !== null && typeof response === 'object' && response.hasOwnProperty('id')) {
-        // Обработка успешного добавления пользователя
-    } else {
-        console.error('Invalid response format or null:', response);
-    }
-}
+
 
 </script>
 
