@@ -175,7 +175,7 @@ while ($bd = mysqli_fetch_assoc($result)) {
     userIds.forEach(function (userId) {
         var statusCircle = $('tr[data-user-id="' + userId + '"] .status-circle');
 
-        // Проверяем наличие пользователя с заданным userId
+       
         var userRow = $('tr[data-user-id="' + userId + '"]');
         if (!userRow.length) {
             console.error('User with id ' + userId + ' not found');
@@ -208,8 +208,7 @@ while ($bd = mysqli_fetch_assoc($result)) {
                 errors.push({ userId: userId, error: 'Error updating status' });
             },
             complete: function () {
-                // Добавьте здесь код, который выполнится независимо от успешного или неудачного запроса
-            }
+                      }
         });
     });
 
@@ -220,12 +219,15 @@ while ($bd = mysqli_fetch_assoc($result)) {
     }
 }
 
+function updateStatusCheckboxes() {
+    var checkedUserIds = [];
+    $('.selectCheckbox:checked').each(function () {
+        checkedUserIds.push($(this).closest('tr').data('user-id'));
+    });
 
-
-function deleteUsers(userIds) {
-    $('#deleteConfirmationModal').modal('show');
-    $('#deleteConfirmationModal').data('user-ids', userIds);
 }
+
+
 
 $(document).ready(function () {
 
@@ -330,7 +332,7 @@ checkboxes.change(function () {
     updateSelectAllCheckbox();
 });
 
-// Добавьте следующий обработчик события для вновь добавленных чекбоксов
+
 $('body').on('change', '.selectCheckbox', function () {
     updateSelectAllCheckbox();
 });
@@ -339,13 +341,7 @@ function updateSelectAllCheckbox() {
     selectAllCheckbox.prop('checked', checkboxes.length === checkboxes.filter(':checked').length);
 }
 
-function updateStatusCheckboxes() {
-    var checkedUserIds = [];
-    $('.selectCheckbox:checked').each(function () {
-        checkedUserIds.push($(this).closest('tr').data('user-id'));
-    });
 
-}
 
 
 
@@ -399,21 +395,71 @@ $('body').on('click', '.deleteUserBtn', function () {
     $('#deleteConfirmationModal').modal('show');
 });
 
-// Обработка подтверждения удаления
+
+// Обработчик кнопки подтверждения удаления
 $('#confirmDeleteBtn').click(function () {
     var userIds = $('#deleteConfirmationModal').data('user-ids');
-    if (userIds && Array.isArray(userIds)) {
-        userIds.forEach(function (userId) {
-            deleteUser(userId);
+    var userNames = $('#deleteConfirmationModal').data('user-names');
+    if (userIds && Array.isArray(userIds) && userNames && Array.isArray(userNames)) {
+        userIds.forEach(function (userId, index) {
+            deleteUser(userId, userNames[index]);
         });
     } else {
-        console.error('Invalid user IDs:', userIds);
+        console.error('Invalid user IDs or names:', userIds, userNames);
+    }
+    $('#deleteConfirmationModal').modal('hide');
+});
+
+function deleteUsers() {
+    var selectedUserIds = [];
+    var selectedUserNames = []; 
+
+    $('.selectCheckbox:checked').each(function () {
+        var userId = $(this).closest('tr').data('user-id');
+        var userName = $('tr[data-user-id="' + userId + '"] td:nth-child(2)').text().trim();
+        selectedUserIds.push(userId);
+        selectedUserNames.push(userName);
+    });
+
+    if (selectedUserIds.length === 0) {
+        showMessage('Please select at least one user.');
+        return;
+    }
+
+    $('#deleteConfirmationBody').text('Are you sure you want to delete ' + selectedUserNames + '?');
+
+
+
+    $('#deleteConfirmationModal').modal('show');
+    $('#deleteConfirmationModal').data('user-ids', selectedUserIds);
+    $('#deleteConfirmationModal').data('user-names', selectedUserNames);
+}
+
+
+// Обработчик кнопки подтверждения удаления
+$('#confirmDeleteBtn').click(function () {
+    var userIds = $('#deleteConfirmationModal').data('user-ids');
+    var userNames = $('#deleteConfirmationModal').data('user-names');
+    if (userIds && Array.isArray(userIds) && userNames && Array.isArray(userNames)) {
+        userIds.forEach(function (userId, index) {
+            deleteUser(userId, userNames[index]);
+        });
+    } else {
+        console.error('Invalid user IDs or names:', userIds, userNames);
     }
     $('#deleteConfirmationModal').modal('hide');
 });
 
 
-function deleteUser(userId) {
+
+// Функция удаления пользователя 
+function deleteUser(userId, userName) {
+    var userRow = $('tr[data-user-id="' + userId + '"]');
+    if (!userRow.length) {
+        showMessage('There is no object with this id', 'error');
+        return;
+    }
+
     var formData = new FormData();
     formData.append('userId', userId);
 
@@ -425,22 +471,24 @@ function deleteUser(userId) {
         contentType: false,
         dataType: 'json',
         success: function () {
-            // Явная проверка наличия пользователя перед удалением
+            
             var userRow = $('tr[data-user-id="' + userId + '"]');
             if (userRow.length) {
                 userRow.remove();
             } else {
                 console.error('User with id ' + userId + ' not found');
-                showMessage('User with id ' + userId + ' not found. The changes you entered are saved; to see them, refresh the page.');
+                showMessage('User ' + userName + ' with id ' + userId + ' not found. The changes you entered are saved; to see them, refresh the page.');
             }
         },
         error: function (xhr, status, error) {
             console.error('Error deleting user:', status, error);
             console.error('XHR object:', xhr.responseText);
-            showMessage('Error deleting user. Please try again.');
+            showMessage('Error deleting user ' + userName + '. Please try again.');
         }
     });
 }
+
+
 
 
 function showMessage(message) {
@@ -490,11 +538,14 @@ function addUser() {
     var name = nameInput.value.trim();
     var lastname = lastnameInput.value.trim();
     
-    // Получаем числовое значение роли
-    var role = (roleSelect.value === 'admin' || roleSelect.value === '1') ? 1 : 2;
-
     
-    var status = statusCheckbox.checked ? '1' : '0';
+    var role = (roleSelect.value === 'admin' || roleSelect.value === '1') ? 1 : 2;
+    
+   
+    var selectAllStatus = $('#selectAllCheckbox').prop('checked');
+    
+    
+    var status = selectAllStatus ? '1' : (statusCheckbox.checked ? '1' : '0');
 
     if (name === '' || lastname === '') {
         errorMessage.textContent = 'Please enter both your first and last name.';
@@ -518,12 +569,9 @@ function addUser() {
         dataType: 'json',
         success: function (response) {
             var newRow = "<tr data-user-id='" + response.id + "'>";
-            newRow += "<td><input type='checkbox' class='selectCheckbox'></td>";
+            newRow += "<td><input type='checkbox' class='selectCheckbox'" + (selectAllStatus ? ' checked' : '') + "></td>";
             newRow += "<td>" + response.name + "&nbsp;" + response.lastname + "</td>";
-            
-            // Отображаем числовое значение роли
             newRow += "<td>" + (role === 1 ? 'admin' : 'user') + "</td>";
-            
             newRow += "<td class='text-center align-middle'><div class='status-circle " + (response.status === '1' ? 'status-active' : 'status-inactive') + "'></div></td>";
             newRow += "<td class='text-center align-middle'>";
             newRow += "<a href='#' class='btn border-dark btn-sm ms-1 btn-rounded editUserBtn' data-user-id='" + response.id + "'><i class='fas fa-pen-to-square'></i></a>";
@@ -533,6 +581,9 @@ function addUser() {
 
             jQuery('tbody').append(newRow);
             jQuery('#addUserModal').modal('hide');
+
+           
+            updateSelectAllCheckbox();
 
             var editModal = createEditModal(response.id, response);
             $('body').append(editModal);
@@ -611,7 +662,7 @@ function updateUser(userId) {
             handleUpdateError(xhr, status, error);
         },
         complete: function () {
-            // Добавлен код, который выполнится независимо от успешного или неудачного запроса
+           
         }
     });
 }
@@ -659,6 +710,24 @@ function hideEditModal(userId) {
 }
 
 
+function updateSelectAllCheckbox() {
+    var selectAllCheckbox = $('#selectAllCheckbox');
+    var checkboxes = $('.selectCheckbox');
+
+    selectAllCheckbox.prop('checked', checkboxes.length === checkboxes.filter(':checked').length);
+}
+
+
+$('body').on('change', '.selectCheckbox', function () {
+    updateSelectAllCheckbox();
+});
+
+
+$('#selectAllCheckbox').change(function () {
+    var isChecked = $(this).prop('checked');
+    $('.selectCheckbox').prop('checked', isChecked);
+    updateStatusCheckboxes();
+});
 
 </script>
 
