@@ -335,11 +335,10 @@ checkboxes.change(function () {
 
 $('body').on('change', '.selectCheckbox', function () {
     updateSelectAllCheckbox();
+    updateStatusCheckboxes();
 });
 
-function updateSelectAllCheckbox() {
-    selectAllCheckbox.prop('checked', checkboxes.length === checkboxes.filter(':checked').length);
-}
+
 
 
 
@@ -409,10 +408,9 @@ $('#confirmDeleteBtn').click(function () {
     }
     $('#deleteConfirmationModal').modal('hide');
 });
-
 function deleteUsers() {
     var selectedUserIds = [];
-    var selectedUserNames = []; 
+    var selectedUserNames = [];
 
     $('.selectCheckbox:checked').each(function () {
         var userId = $(this).closest('tr').data('user-id');
@@ -426,14 +424,17 @@ function deleteUsers() {
         return;
     }
 
-    $('#deleteConfirmationBody').text('Are you sure you want to delete ' + selectedUserNames + '?');
+    var confirmationText = selectedUserIds.length > 1
+        ? 'Are you sure you want to delete users?'
+        : 'Are you sure you want to delete ' + selectedUserNames[0] + '?';
 
-
+    $('#deleteConfirmationBody').text(confirmationText);
 
     $('#deleteConfirmationModal').modal('show');
     $('#deleteConfirmationModal').data('user-ids', selectedUserIds);
     $('#deleteConfirmationModal').data('user-names', selectedUserNames);
 }
+
 
 
 // Обработчик кнопки подтверждения удаления
@@ -726,8 +727,10 @@ $('body').on('change', '.selectCheckbox', function () {
 $('#selectAllCheckbox').change(function () {
     var isChecked = $(this).prop('checked');
     $('.selectCheckbox').prop('checked', isChecked);
+    updateSelectAllCheckbox();  // Замените на эту строку
     updateStatusCheckboxes();
 });
+
 
 </script>
 
