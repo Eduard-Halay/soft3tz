@@ -169,55 +169,78 @@ while ($bd = mysqli_fetch_assoc($result)) {
       
 
     
-                    <script>function updateStatus(userIds, newStatus) {
-    var errors = [];
+                    <script>
+      function updateStatus(userIds, newStatus) {
+        var errors = [];
 
-    userIds.forEach(function (userId) {
-        var statusCircle = $('tr[data-user-id="' + userId + '"] .status-circle');
+        function updateUserStatus(userId) {
+            var deferred = $.Deferred();
 
-       
-        var userRow = $('tr[data-user-id="' + userId + '"]');
-        if (!userRow.length) {
-            console.error('User with id ' + userId + ' not found');
-            errors.push({ userId: userId, error: 'User not found' });
-            return;
+            var statusCircle = $('tr[data-user-id="' + userId + '"] .status-circle');
+            var userRow = $('tr[data-user-id="' + userId + '"]');
+
+            if (!userRow.length) {
+                var error = { userId: userId, error: 'User with id ' + userId + ' not found' };
+                errors.push(error);
+                deferred.reject(error.error); 
+            } else {
+                $.ajax({
+                    type: 'POST',
+                    url: 'update_status.php',
+                    data: { userId: userId, newStatus: newStatus },
+                    cache: false,
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response && response.status !== undefined) {
+                            if (response.status === null) {
+                                var error = { userId: userId, error: 'Status is null' };
+                                errors.push(error); 
+                                deferred.reject(error.error); 
+                            } else {
+                                statusCircle.css('background-color', response.status === '1' ? 'green' : 'gray');
+                                deferred.resolve();
+                            }
+                        } else {
+                            var error = { userId: userId, error: 'Invalid response format' };
+                            errors.push(error); 
+                            deferred.reject(error.error); 
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error updating status:', status, error);
+                        console.error('XHR object:', xhr.responseText);
+                        console.error('User ID:', userId);
+                        var error = { userId: userId, error: 'Error updating status' };
+                        errors.push(error); 
+                        deferred.reject(error.error); 
+                    },
+                    complete: function () {
+                       
+                    }
+                });
+            }
+
+            return deferred.promise();
         }
 
-        $.ajax({
-            type: 'POST',
-            url: 'update_status.php',
-            data: { userId: userId, newStatus: newStatus },
-            cache: false,
-            dataType: 'json',
-            success: function (response) {
-                if (response && response.status !== undefined) {
-                    if (response.status === null) {
-                        console.error('Error updating status:', 'Status is null');
-                        errors.push({ userId: userId, error: 'Error updating status' });
-                    } else {
-                        statusCircle.css('background-color', response.status === '1' ? 'green' : 'gray');
-                    }
-                } else {
-                    console.error('Invalid response format:', response);
-                }
-            },
-            error: function (xhr, status, error) {
-                console.error('Error updating status:', status, error);
-                console.error('XHR object:', xhr.responseText);
-                console.error('User ID:', userId);
-                errors.push({ userId: userId, error: 'Error updating status' });
-            },
-            complete: function () {
-                      }
-        });
-    });
+        var promises = [];
 
-    if (errors.length > 0) {
-        return { success: false, errors: errors };
-    } else {
-        return { success: true, status: newStatus };
+        userIds.forEach(function (userId) {
+            promises.push(updateUserStatus(userId));
+        });
+
+        $.when.apply($, promises).then(
+            function () {
+               
+            },
+            function () {
+                
+                showMessage('Error updating status');
+                console.error('Error updating status:', errors);
+            }
+        );
     }
-}
+
 
 function updateStatusCheckboxes() {
     var checkedUserIds = [];
