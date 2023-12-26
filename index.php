@@ -170,76 +170,89 @@ while ($bd = mysqli_fetch_assoc($result)) {
 
     
                     <script>
-      function updateStatus(userIds, newStatus) {
-        var errors = [];
+                    
+                    function updateStatus(userIds, newStatus) {
+    var errors = [];
 
-        function updateUserStatus(userId) {
-            var deferred = $.Deferred();
+    function updateUserStatus(userId) {
+        var deferred = $.Deferred();
 
-            var statusCircle = $('tr[data-user-id="' + userId + '"] .status-circle');
-            var userRow = $('tr[data-user-id="' + userId + '"]');
+        var statusCircle = $('tr[data-user-id="' + userId + '"] .status-circle');
+        var userRow = $('tr[data-user-id="' + userId + '"]');
 
-            if (!userRow.length) {
-                var error = { userId: userId, error: 'User with id ' + userId + ' not found' };
-                errors.push(error);
-                deferred.reject(error.error); 
-            } else {
-                $.ajax({
-                    type: 'POST',
-                    url: 'update_status.php',
-                    data: { userId: userId, newStatus: newStatus },
-                    cache: false,
-                    dataType: 'json',
-                    success: function (response) {
-                        if (response && response.status !== undefined) {
-                            if (response.status === null) {
-                                var error = { userId: userId, error: 'Status is null' };
-                                errors.push(error); 
-                                deferred.reject(error.error); 
+        if (!userRow.length) {
+            var error = { userId: userId, error: 'User with id ' + userId + ' not found' };
+            errors.push(error);
+            deferred.reject(error.error);
+        } else {
+            $.ajax({
+                type: 'POST',
+                url: 'update_status.php',
+                data: { userId: userId, newStatus: newStatus },
+                cache: false,
+                dataType: 'json',
+                success: function (response) {
+                    if (response && response.status !== undefined) {
+                        if (response.status === null || typeof response.status !== 'boolean') {
+                            var error = { userId: userId, error: 'Invalid status value' };
+                            errors.push(error);
+                            deferred.reject(error.error);
+                        } else {
+                            if (response.status === false) {
+                             
+                                var error = { userId: userId, error: 'Error updating status: ' + response.error.message };
+                                errors.push(error);
+                                showMessage(error.error);
+                                deferred.reject(error.error);
                             } else {
-                                statusCircle.css('background-color', response.status === '1' ? 'green' : 'gray');
+                               
+                                statusCircle.css('background-color', response.dev === '1' ? 'green' : 'gray');
                                 deferred.resolve();
                             }
-                        } else {
-                            var error = { userId: userId, error: 'Invalid response format' };
-                            errors.push(error); 
-                            deferred.reject(error.error); 
                         }
-                    },
-                    error: function (xhr, status, error) {
-                        console.error('Error updating status:', status, error);
-                        console.error('XHR object:', xhr.responseText);
-                        console.error('User ID:', userId);
-                        var error = { userId: userId, error: 'Error updating status' };
-                        errors.push(error); 
-                        deferred.reject(error.error); 
-                    },
-                    complete: function () {
-                       
+                    } else {
+                        var error = { userId: userId, error: 'Invalid response format' };
+                        errors.push(error);
+                        deferred.reject(error.error);
                     }
-                });
-            }
-
-            return deferred.promise();
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error updating status:', status, error);
+                    console.error('XHR object:', xhr.responseText);
+                    console.error('User ID:', userId);
+                    var error = { userId: userId, error: 'Error updating status' };
+                    errors.push(error);
+                    showMessage(error.error);
+                    deferred.reject(error.error);
+                   
+                    $(document).trigger('ajaxError', [xhr, status, error]);
+                },
+                complete: function () {
+                          }
+            });
         }
 
-        var promises = [];
-
-        userIds.forEach(function (userId) {
-            promises.push(updateUserStatus(userId));
-        });
-
-        $.when.apply($, promises).then(
-            function () {
-               
-            },
-            function () {
-                
-                showMessage('Error updating status');
-                console.error('Error updating status:', errors);
-            }
-        );
+        return deferred.promise();
     }
+
+    var promises = [];
+
+    userIds.forEach(function (userId) {
+        promises.push(updateUserStatus(userId));
+    });
+
+    $.when.apply($, promises).then(
+        function () {
+           
+        },
+        function () {
+           
+           //console.error('Error updating status:', errors);
+            console.error('Error updating status');
+        }
+    );
+}
+
 
 
 function updateStatusCheckboxes() {
