@@ -5,7 +5,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $userId = $_POST['userId'];
     $newStatus = $_POST['newStatus'];
 
-    
+  
     $updateQuery = "UPDATE `client` SET `status`='$newStatus' WHERE `id`='$userId'";
     
    
@@ -14,19 +14,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $selectQuery = "SELECT `status` FROM `client` WHERE `id`='$userId'";
         $result = mysqli_query($induction, $selectQuery);
         
-       
-        $row = mysqli_fetch_assoc($result);
-        
-        
-        echo json_encode(['status' => $row['status']]);
+      
+        if ($result) {
+         
+            $row = mysqli_fetch_assoc($result);
+
+          
+            $status = $row['status'];
+
+         
+            if ($row) {
+                echo json_encode(['status' => true, 'error' => null, 'id' => $userId, 'dev' => $status]);
+            } else {
+                echo json_encode(['status' => false, 'error' => ['code' => 100, 'message' => 'not found user']]);
+            }
+        } else {
+          
+            http_response_code(500); 
+            echo json_encode(['status' => false, 'error' => ['code' => 105, 'message' => 'Failed to update status']]);
+        }
     } else {
-       
-        http_response_code(500); 
-        echo json_encode(['error' => ['code' => 105, 'message' => 'Failed to update status']]);
+        
+        http_response_code(500);
+        echo json_encode(['status' => false, 'error' => ['code' => 105, 'message' => 'Failed to update status']]);
     }
 } else {
    
     http_response_code(400);
-    echo json_encode(['error' => ['code' => 105, 'message' => 'Invalid request method']]);
+    echo json_encode(['status' => false, 'error' => ['code' => 105, 'message' => 'Invalid request method']]);
 }
 ?>
