@@ -18,53 +18,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($selectResult) {
             $userData = mysqli_fetch_assoc($selectResult);
 
-            
             if ($userData === null) {
                 $errorResponse = array(
-                    'statusOperation' => false,
-                    'error' => array('code' => 104, 'message' => 'Object is deleted')
+                    'status' => false,
+                    'error' => array('code' => 104, 'message' => 'Object is deleted'),
+                    'user' => null
                 );
                 echo json_encode($errorResponse);
                 exit;
             }
 
-           
             $response = array(
-                'statusOperation' => true,
+                'status' => true,
                 'error' => null,
-                'id' => $userId,
-                'name' => $userData['name'],
-                'lastname' => $userData['lastname'],
-                'status' => $userData['status'],
-                'role' => $userData['role']
+                'user' => array(
+                    'id' => $userId,
+                    'name_first' => $userData['name'],
+                    'name_last' => $userData['lastname'],
+                    'status' => $userData['status']
+                )
             );
 
-         
             header('Content-Type: application/json');
-
-            
             echo json_encode($response);
         } else {
-          
             $errorResponse = array(
-                'statusOperation' => false,
-                'error' => array('code' => 101, 'message' => 'Error selecting user')
+                'status' => false,
+                'error' => array('code' => 101, 'message' => 'Error selecting user'),
+                'user' => null
             );
             echo json_encode($errorResponse);
         }
     } else {
-       
         $errorResponse = array(
-            'statusOperation' => false,
-            'error' => array('code' => 102, 'message' => 'Error updating user')
+            'status' => false,
+            'error' => array('code' => 102, 'message' => 'Error updating user'),
+            'user' => null
         );
         echo json_encode($errorResponse);
     }
 } else {
-   
     $errorResponse = array(
-        'statusOperation' => false,
-        'error' => array('code' => 103, 'message' => 'Invalid request')
+        'status' => false,
+        'error' => array('code' => 103, 'message' => 'Invalid request'),
+        'user' => null
     );
     echo json_encode($errorResponse);
 }
