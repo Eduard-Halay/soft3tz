@@ -11,33 +11,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $insertResult = mysqli_query($induction, $query);
 
     if ($insertResult) {
-       
         $newUserId = mysqli_insert_id($induction);
         $result = mysqli_query($induction, "SELECT * FROM `client` WHERE `id` = $newUserId");
         $newUserData = mysqli_fetch_assoc($result);
 
-        
         $response = array(
-            'statusOperation' => true,
+            'status' => true,
             'error' => null,
-            'id' => $newUserData['id'],
-            'name' => $newUserData['name'],
-            'lastname' => $newUserData['lastname'],
-            'role' => $newUserData['role'],
-            'status' => $newUserData['status']
+            'user' => array(
+                'id' => $newUserData['id'],
+                'name_first' => $newUserData['name'],
+                'name_last' => $newUserData['lastname'],
+                'status' => $newUserData['status'],
+                'role' => $newUserData['role']
+            )
         );
     } else {
-      
         $response = array(
-            'statusOperation' => false,
+            'status' => false,
             'error' => array('code' => 201, 'message' => 'Error inserting user data')
         );
     }
 
-    
     header('Content-Type: application/json');
-
-   
     echo json_encode($response);
 }
 ?>
