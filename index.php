@@ -550,8 +550,9 @@ function createEditModal(userId, userData) {
     
    
     var form = $('<form id="editForm' + userId + '">');
-    form.append('<div class="mb-3"><label for="editName' + userId + '" class="form-label">Name</label><input type="text" class="form-control" id="editName' + userId + '" value="' + userData.name + '"></div>');
-    form.append('<div class="mb-3"><label for="editLastname' + userId + '" class="form-label">Lastname</label><input type="text" class="form-control" id="editLastname' + userId + '" value="' + userData.lastname + '"></div>');
+    form.append('<div class="mb-3"><label for="editName' + userId + '" class="form-label">Name</label><input type="text" class="form-control" id="editName' + userId + '" value="' + userData.name_first + '"></div>');
+form.append('<div class="mb-3"><label for="editLastname' + userId + '" class="form-label">Lastname</label><input type="text" class="form-control" id="editLastname' + userId + '" value="' + userData.name_last + '"></div>');
+
     form.append('<div class="mb-3"><label for="editStatus' + userId + '" class="form-label">Status</label><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="editStatus' + userId + '" ' + (userData.status === '1' ? 'checked' : '') + '><label class="form-check-label" for="editStatus' + userId + '"></label></div></div>');
     form.append('<div class="mb-3"><label for="editRole' + userId + '" class="form-label">Role</label><select class="form-select" id="editRole' + userId + '"><option value="2" ' + (userData.role === '2' ? 'selected' : '') + '>User</option><option value="1" ' + (userData.role === '1' ? 'selected' : '') + '>Admin</option></select></div>');
     modal.find('.modal-body').append(form);
@@ -564,32 +565,25 @@ function createEditModal(userId, userData) {
 
     return modal;
 }
-
 function addUser() {
-    var nameInput = document.getElementById('addName');
-    var lastnameInput = document.getElementById('addLastname');
-    var roleSelect = document.getElementById('addRole');
-    var statusCheckbox = document.getElementById('addStatus');
-    var errorMessage = document.getElementById('errorMessage');
+    var nameInput = $('#addName');
+    var lastnameInput = $('#addLastname');
+    var roleSelect = $('#addRole');
+    var statusCheckbox = $('#addStatus');
+    var errorMessage = $('#errorMessage');
 
-    var name = nameInput.value.trim();
-    var lastname = lastnameInput.value.trim();
-    
-    
-    var role = (roleSelect.value === 'admin' || roleSelect.value === '1') ? 1 : 2;
-    
-   
+    var name = nameInput.val().trim();
+    var lastname = lastnameInput.val().trim();
+    var role = (roleSelect.val() === 'admin' || roleSelect.val() === '1') ? 1 : 2;
     var selectAllStatus = $('#selectAllCheckbox').prop('checked');
-    
-    
-    var status = selectAllStatus ? '1' : (statusCheckbox.checked ? '1' : '0');
+    var status = selectAllStatus ? '1' : (statusCheckbox.prop('checked') ? '1' : '0');
 
     if (name === '' || lastname === '') {
-        errorMessage.textContent = 'Please enter both your first and last name.';
+        errorMessage.text('Please enter both your first and last name.');
         return;
     }
 
-    errorMessage.textContent = '';
+    errorMessage.text('');
 
     var formData = new FormData();
     formData.append('name', name);
@@ -597,7 +591,7 @@ function addUser() {
     formData.append('role', role);
     formData.append('status', status);
 
-    jQuery.ajax({
+    $.ajax({
         type: 'POST',
         url: 'add_user.php',
         data: formData,
@@ -605,29 +599,34 @@ function addUser() {
         contentType: false,
         dataType: 'json',
         success: function (response) {
-            var newRow = "<tr data-user-id='" + response.id + "'>";
-            newRow += "<td><input type='checkbox' class='selectCheckbox'" + (selectAllStatus ? ' checked' : '') + "></td>";
-            newRow += "<td>" + response.name + "&nbsp;" + response.lastname + "</td>";
-            newRow += "<td>" + (role === 1 ? 'admin' : 'user') + "</td>";
-            newRow += "<td class='text-center align-middle'><div class='status-circle " + (response.status === '1' ? 'status-active' : 'status-inactive') + "'></div></td>";
-            newRow += "<td class='text-center align-middle'>";
-            newRow += "<a href='#' class='btn border-dark btn-sm ms-1 btn-rounded editUserBtn' data-user-id='" + response.id + "'><i class='fas fa-pen-to-square'></i></a>";
-            newRow += "<a href='#' class='btn border-dark btn-sm me-1 btn-rounded deleteUserBtn'><i class='fas fa-trash-alt'></i></a>";
-            newRow += "</td>";
-            newRow += "</tr>";
+            if (response !== null && typeof response === 'object' && response.hasOwnProperty('user')) {
+                var userData = response.user;
 
-            jQuery('tbody').append(newRow);
-            jQuery('#addUserModal').modal('hide');
+                var newRow = "<tr data-user-id='" + userData.id + "'>";
+                newRow += "<td><input type='checkbox' class='selectCheckbox'></td>";
+                newRow += "<td>" + userData.name_first + "&nbsp;" + userData.name_last + "</td>";
+                newRow += "<td>" + (userData.role === '1' ? 'admin' : 'user') + "</td>";
+                newRow += "<td class='text-center align-middle'><div class='status-circle " + (userData.status === '1' ? 'status-active' : 'status-inactive') + "'></div></td>";
+                newRow += "<td class='text-center align-middle'>";
+                newRow += "<a href='#' class='btn border-dark btn-sm ms-1 btn-rounded editUserBtn' data-user-id='" + userData.id + "'><i class='fas fa-pen-to-square'></i></a>";
+                newRow += "<a href='#' class='btn border-dark btn-sm me-1 btn-rounded deleteUserBtn'><i class='fas fa-trash-alt'></i></a>";
+                newRow += "</td>";
+                newRow += "</tr>";
 
-           
-            updateSelectAllCheckbox();
+                $('tbody').append(newRow);
+                $('#addUserModal').modal('hide');
 
-            var editModal = createEditModal(response.id, response);
-            $('body').append(editModal);
+                updateSelectAllCheckbox();
+
+                var editModal = createEditModal(userData.id, userData);
+                $('body').append(editModal);
+            } else {
+                console.error('Invalid response format or null:', response);
+            }
         },
         error: function (xhr, status, error) {
             console.error('Error adding user:', status, error);
-            console.error('Объект XHR:', xhr.responseText);
+            console.error('XHR object:', xhr.responseText);
         }
     });
 }
@@ -660,21 +659,21 @@ function showEditModal(userId) {
     
     $('#editModal' + userId).modal('show');
 }
-
 function updateUser(userId) {
     var userRow = $('tr[data-user-id="' + userId + '"]');
     if (!userRow.length) {
-        showMessage('There is no object with this id', 'error');
+        showMessage('Объект с этим идентификатором не найден', 'error');
         return;
     }
 
+   
     var nameInput = $('#editName' + userId);
     var lastnameInput = $('#editLastname' + userId);
     var statusCheckbox = $('#editStatus' + userId);
     var roleSelect = $('#editRole' + userId);
 
-    var name = nameInput.val();
-    var lastname = lastnameInput.val();
+    var name = nameInput.val().trim();  
+    var lastname = lastnameInput.val().trim();
     var status = statusCheckbox.prop('checked') ? '1' : '0';
     var role = roleSelect.val() === '1' ? '1' : '2';
 
@@ -693,7 +692,8 @@ function updateUser(userId) {
         contentType: false,
         dataType: 'json',
         success: function (response) {
-            handleUpdateSuccess(userId, response, statusCheckbox);
+            handleUpdateSuccess(userId, response, statusCheckbox, nameInput, lastnameInput);
+
         },
         error: function (xhr, status, error) {
             handleUpdateError(xhr, status, error);
@@ -703,22 +703,23 @@ function updateUser(userId) {
         }
     });
 }
-
-function handleUpdateSuccess(userId, response, statusCheckbox) {
+function handleUpdateSuccess(userId, response, statusCheckbox, nameInput, lastnameInput) {
     var userRow = $('tr[data-user-id="' + userId + '"]');
     
     if (userRow.length) {
-        if (response !== null && typeof response === 'object' && response.hasOwnProperty('name') && response.hasOwnProperty('lastname') && response.hasOwnProperty('role') && response.hasOwnProperty('status')) {
-            userRow.find('td:nth-child(2)').text(response.name + ' ' + response.lastname);
-            userRow.find('td:nth-child(3)').text(response.role === '1' ? 'admin' : 'user');
+        if (response && response.user) {
+            var userData = response.user;
+
+            userRow.find('td:nth-child(2)').html(userData.name_first + ' ' + userData.name_last);
+            userRow.find('td:nth-child(3)').text(userData.role === '1' ? 'admin' : 'user');
 
             var statusCircle = userRow.find('.status-circle');
-            statusCircle.removeClass().addClass('status-circle ' + (response.status === '1' ? 'status-active' : 'status-inactive'));
+            statusCircle.removeClass().addClass('status-circle ' + (userData.status === '1' ? 'status-active' : 'status-inactive'));
 
             hideEditModal(userId);
         } else {
             console.error('Invalid response format or null:', response);
-            showMessage('There is no object with this id,  refresh the page', 'error');
+            showMessage('There is no object with this id, refresh the page', 'error');
             response = {
                 error: 'Invalid response format or null'
             };
@@ -729,6 +730,8 @@ function handleUpdateSuccess(userId, response, statusCheckbox) {
     }
 }
 
+
+
 function handleUpdateError(xhr, status, error) {
     if (xhr.status === 404) {
         showMessage('There is no object with this id', 'error');
@@ -736,6 +739,7 @@ function handleUpdateError(xhr, status, error) {
         console.error('Update failed. Status:', status, 'Error:', error);
     }
 }
+
 
 function hideEditModal(userId) {
     var editModal = $('#editModal' + userId);
@@ -763,7 +767,7 @@ $('body').on('change', '.selectCheckbox', function () {
 $('#selectAllCheckbox').change(function () {
     var isChecked = $(this).prop('checked');
     $('.selectCheckbox').prop('checked', isChecked);
-    updateSelectAllCheckbox();  // Замените на эту строку
+    updateSelectAllCheckbox();  
     updateStatusCheckboxes();
 });
 
