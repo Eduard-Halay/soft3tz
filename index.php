@@ -104,7 +104,7 @@ while ($bd = mysqli_fetch_assoc($result)) {
     echo "</tr>";
 
     // Модальное окно для редактирования
-    echo "<div class='modal fade' id='editModal{$userId}' tabindex='-1' aria-labelledby='editModalLabel' aria-hidden='true'>";
+    echo "<div class='modal fade ' id='editModal{$userId}' tabindex='-1' aria-labelledby='editModalLabel' aria-hidden='true'>";
     echo "  <div class='modal-dialog'>";
     echo "    <div class='modal-content'>";
     echo "      <div class='modal-header'>";
@@ -217,7 +217,7 @@ while ($bd = mysqli_fetch_assoc($result)) {
                     }
                 },
                 error: function (xhr, status, error) {
-                    console.error('Error updating status:', status, error);
+                    
                     console.error('XHR object:', xhr.responseText);
                     console.error('User ID:', userId);
                     var error = { userId: userId, error: 'Error updating status' };
@@ -241,16 +241,7 @@ while ($bd = mysqli_fetch_assoc($result)) {
         promises.push(updateUserStatus(userId));
     });
 
-    $.when.apply($, promises).then(
-        function () {
-           
-        },
-        function () {
-           
-           //console.error('Error updating status:', errors);
-            console.error('Error updating status');
-        }
-    );
+   
 }
 
 
@@ -659,20 +650,62 @@ function showEditModal(userId) {
     
     $('#editModal' + userId).modal('show');
 }
+
+var currentUserId = null;
+
+function hideEditModal(userId) { 
+    var editModal;
+    
+    if (userId) {
+        currentUserId = userId;
+    }
+ 
+    if (currentUserId !== null) {
+        editModal = $('#editModal' + currentUserId);
+        if (editModal.length) {
+            editModal.modal('hide');
+        } else {
+            console.error('Modal window for user with ID ' + currentUserId + ' not found');
+        }
+    } else {
+        console.error('userId is not defined');
+    }
+}
+
 function updateUser(userId) {
+    var errors = [];
+
+    function handleUpdateError(xhr, status, error) {
+        var errorMessage;
+
+        if (xhr.responseJSON && xhr.responseJSON.error) {
+            errorMessage = xhr.responseJSON.error.message;
+        } else {
+            errorMessage = 'Error updating user';
+        }
+
+        if (userId && $('#editModal' + userId).length) {
+            hideEditModal(userId);
+        }
+
+        errors.push({ userId: currentUserId, error: errorMessage });
+        showMessage(errorMessage, 'error');
+    }
+
     var userRow = $('tr[data-user-id="' + userId + '"]');
     if (!userRow.length) {
-        showMessage('Объект с этим идентификатором не найден', 'error');
+        var error = { userId: userId, error: 'Object with this ID not found' };
+        errors.push(error);
+        showMessage(error.error, 'error');
         return;
     }
 
-   
     var nameInput = $('#editName' + userId);
     var lastnameInput = $('#editLastname' + userId);
     var statusCheckbox = $('#editStatus' + userId);
     var roleSelect = $('#editRole' + userId);
 
-    var name = nameInput.val().trim();  
+    var name = nameInput.val().trim();
     var lastname = lastnameInput.val().trim();
     var status = statusCheckbox.prop('checked') ? '1' : '0';
     var role = roleSelect.val() === '1' ? '1' : '2';
@@ -693,7 +726,6 @@ function updateUser(userId) {
         dataType: 'json',
         success: function (response) {
             handleUpdateSuccess(userId, response, statusCheckbox, nameInput, lastnameInput);
-
         },
         error: function (xhr, status, error) {
             handleUpdateError(xhr, status, error);
@@ -703,52 +735,68 @@ function updateUser(userId) {
         }
     });
 }
+
 function handleUpdateSuccess(userId, response, statusCheckbox, nameInput, lastnameInput) {
-    var userRow = $('tr[data-user-id="' + userId + '"]');
-    
-    if (userRow.length) {
-        if (response && response.user) {
-            var userData = response.user;
+    if (response && response.status !== undefined) {
+        if (response.status === false) {
+            var errorMessage;
+            if (response.error && response.error.message) {
+                errorMessage = response.error.message;
+            } else {
+                errorMessage = 'Error updating user';
+            }
+            //message then
+            showMessage(errorMessage, 'error');
 
-            userRow.find('td:nth-child(2)').html(userData.name_first + ' ' + userData.name_last);
-            userRow.find('td:nth-child(3)').text(userData.role === '1' ? 'admin' : 'user');
+            if ($('#editModal' + (userId || currentUserId)).length) {
+                hideEditModal(userId);
+            }
 
-            var statusCircle = userRow.find('.status-circle');
-            statusCircle.removeClass().addClass('status-circle ' + (userData.status === '1' ? 'status-active' : 'status-inactive'));
-
-            hideEditModal(userId);
         } else {
-            console.error('Invalid response format or null:', response);
-            showMessage('There is no object with this id, refresh the page', 'error');
-            response = {
-                error: 'Invalid response format or null'
-            };
-            hideEditModal(userId);
+            if (response.status === true) {
+                var userRow = $('tr[data-user-id="' + userId + '"]');
+                if (userRow.length) {
+                    var userData = response.user;
+
+                    userRow.find('td:nth-child(2)').html(userData.name_first + ' ' + userData.name_last);
+                    userRow.find('td:nth-child(3)').text(userData.role === '1' ? 'admin' : 'user');
+
+                    var statusCircle = userRow.find('.status-circle');
+                    statusCircle.removeClass().addClass('status-circle ' + (userData.status === '1' ? 'status-active' : 'status-inactive'));
+
+                    if ($('#editModal' + userId).length) {
+                        hideEditModal(userId);
+                    }
+                } else {
+                    console.error('User row not found');
+                }
+            } else {
+                handleUpdateError(null, 'error', response);
+            }
         }
     } else {
-        console.error('User row not found');
+        console.error('Invalid response format');
     }
 }
-
-
 
 function handleUpdateError(xhr, status, error) {
-    if (xhr.status === 404) {
-        showMessage('There is no object with this id', 'error');
+    var errorMessage;
+
+    if (xhr && xhr.responseJSON && xhr.responseJSON.error) {
+        errorMessage = xhr.responseJSON.error.message;
+    } else if (error && error.error) {
+        errorMessage = error.error;
     } else {
-        console.error('Update failed. Status:', status, 'Error:', error);
+        errorMessage = 'Error updating user';
+    }
+
+    showMessage(errorMessage, 'error'); 
+    
+    if ($('#editModal' + (userId || currentUserId)).length) {
+        hideEditModal(userId);
     }
 }
 
-
-function hideEditModal(userId) {
-    var editModal = $('#editModal' + userId);
-    if (editModal.length) {
-        editModal.modal('hide');
-    } else {
-        console.error('Edit modal not found');
-    }
-}
 
 
 function updateSelectAllCheckbox() {
