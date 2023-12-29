@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($userData === null) {
                 $errorResponse = array(
                     'status' => false,
-                    'error' => array('code' => 104, 'message' => 'Object is deleted'),
+                    'error' => array('code' => 104, 'message' => 'object with this ID was not found'),
                     'user' => null
                 );
                 echo json_encode($errorResponse);
