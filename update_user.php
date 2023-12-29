@@ -35,7 +35,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'id' => $userId,
                     'name_first' => $userData['name'],
                     'name_last' => $userData['lastname'],
-                    'status' => $userData['status']
+                    'status' => $userData['status'],
+                    'role' => $userData['role']
                 )
             );
 
