@@ -114,6 +114,10 @@ while ($bd = mysqli_fetch_assoc($result)) {
     echo "      <div class='modal-body'>";
     echo "        <form id='editForm{$userId}'>";
     echo "          <div class='mb-3'>";
+
+    echo "<div id='editMessageBox{$userId}' class='mt-3 alert alert-danger' style='display: none;'></div>";
+    
+
     echo "            <label for='editName{$userId}' class='form-label'>Name</label>";
     echo "            <input type='text' class='form-control' id='editName{$userId}' value='{$bd['name']}'>";
     echo "          </div>";
@@ -173,76 +177,71 @@ while ($bd = mysqli_fetch_assoc($result)) {
                     
                     function updateStatus(userIds, newStatus) {
     var errors = [];
+    var updatedUserIds = [];
 
-    function updateUserStatus(userId) {
-        var deferred = $.Deferred();
-
-        var statusCircle = $('tr[data-user-id="' + userId + '"] .status-circle');
-        var userRow = $('tr[data-user-id="' + userId + '"]');
-
-        if (!userRow.length) {
-            var error = { userId: userId, error: 'User with id ' + userId + ' not found' };
-            errors.push(error);
-            deferred.reject(error.error);
-        } else {
-            $.ajax({
-                type: 'POST',
-                url: 'update_status.php',
-                data: { userId: userId, newStatus: newStatus },
-                cache: false,
-                dataType: 'json',
-                success: function (response) {
-                    if (response && response.status !== undefined) {
-                        if (response.status === null || typeof response.status !== 'boolean') {
-                            var error = { userId: userId, error: 'Invalid status value' };
-                            errors.push(error);
-                            deferred.reject(error.error);
-                        } else {
-                            if (response.status === false) {
-                             
-                                var error = { userId: userId, error: 'Error updating status: ' + response.error.message };
-                                errors.push(error);
-                                showMessage(error.error);
-                                deferred.reject(error.error);
-                            } else {
-                               
-                                statusCircle.css('background-color', response.dev === '1' ? 'green' : 'gray');
-                                deferred.resolve();
-                            }
-                        }
-                    } else {
-                        var error = { userId: userId, error: 'Invalid response format' };
-                        errors.push(error);
-                        deferred.reject(error.error);
-                    }
-                },
-                error: function (xhr, status, error) {
-                    
-                    console.error('XHR object:', xhr.responseText);
-                    console.error('User ID:', userId);
-                    var error = { userId: userId, error: 'Error updating status' };
-                    errors.push(error);
-                    showMessage(error.error);
-                    deferred.reject(error.error);
-                   
-                    $(document).trigger('ajaxError', [xhr, status, error]);
-                },
-                complete: function () {
-                          }
-            });
-        }
-
-        return deferred.promise();
-    }
-
-    var promises = [];
+    var requestData = {
+        users: [],
+        newStatus: newStatus
+    };
 
     userIds.forEach(function (userId) {
-        promises.push(updateUserStatus(userId));
+        var userRow = $('tr[data-user-id="' + userId + '"]');
+        if (userRow.length) {
+            requestData.users.push({ id: userId, status: newStatus });
+            updatedUserIds.push(userId);
+        } else {
+            var error = { userId: userId, error: 'User with id ' + userId + ' not found' };
+            errors.push(error);
+        }
     });
 
-   
+    if (requestData.users.length === 0) {
+        showMessage('No valid users selected.');
+        return;
+    }
+
+    $.ajax({
+        type: 'POST',
+        url: 'update_status.php',
+        data: { users: requestData.users, newStatus: newStatus },
+        cache: false,
+        dataType: 'json',
+        success: function (response) {
+            if (response && response.status !== undefined) {
+                if (response.status === false) {
+                   
+                    response.error.forEach(function (error) {
+                        showMessage('Error updating status for user ' + error.userId + ': ' + error.error);
+                    });
+                 
+                    updateElements(updatedUserIds, newStatus);
+                } else {
+                   
+                    updateElements(userIds, newStatus);
+                }
+            } else {
+                showMessage('Invalid response format');
+            }
+        },
+        error: function (xhr, status, error) {
+            showMessage('Error updating status');
+           
+            updateElements(updatedUserIds, newStatus);
+            $(document).trigger('ajaxError', [xhr, status, error]);
+        }
+    });
 }
+
+function updateElements(userIds, newStatus) {
+    userIds.forEach(function (userId) {
+        var statusCircle = $('tr[data-user-id="' + userId + '"] .status-circle');
+        statusCircle.css('background-color', newStatus === '1' ? 'green' : 'gray');
+    });
+}
+
+
+
+
 
 
 
@@ -650,16 +649,15 @@ function showEditModal(userId) {
     
     $('#editModal' + userId).modal('show');
 }
-
 var currentUserId = null;
 
-function hideEditModal(userId) { 
+function hideEditModal(userId) {
     var editModal;
-    
+
     if (userId) {
         currentUserId = userId;
     }
- 
+
     if (currentUserId !== null) {
         editModal = $('#editModal' + currentUserId);
         if (editModal.length) {
@@ -685,7 +683,10 @@ function updateUser(userId) {
         }
 
         if (userId && $('#editModal' + userId).length) {
-            hideEditModal(userId);
+            // Не закрывать модальное окно в случае ошибки
+            // hideEditModal(userId);
+
+            $('#editMessageBox' + userId).text(errorMessage).addClass('alert-danger').show();
         }
 
         errors.push({ userId: currentUserId, error: errorMessage });
@@ -731,7 +732,7 @@ function updateUser(userId) {
             handleUpdateError(xhr, status, error);
         },
         complete: function () {
-           
+
         }
     });
 }
@@ -746,11 +747,11 @@ function handleUpdateSuccess(userId, response, statusCheckbox, nameInput, lastna
                 errorMessage = 'Error updating user';
             }
             //message then
-            showMessage(errorMessage, 'error');
-
-            if ($('#editModal' + (userId || currentUserId)).length) {
-                hideEditModal(userId);
-            }
+          //  showMessage(errorMessage, 'error');
+            $('#editMessageBox' + userId).text(errorMessage).addClass('alert-danger').show();
+            // if ($('#editModal' + (userId || currentUserId)).length) {
+            //     hideEditModal(userId);
+            // }
 
         } else {
             if (response.status === true) {
@@ -764,9 +765,9 @@ function handleUpdateSuccess(userId, response, statusCheckbox, nameInput, lastna
                     var statusCircle = userRow.find('.status-circle');
                     statusCircle.removeClass().addClass('status-circle ' + (userData.status === '1' ? 'status-active' : 'status-inactive'));
 
-                    if ($('#editModal' + userId).length) {
-                        hideEditModal(userId);
-                    }
+                    // if ($('#editModal' + userId).length) {
+                    //     hideEditModal(userId);
+                    // }
                 } else {
                     console.error('User row not found');
                 }
@@ -790,13 +791,12 @@ function handleUpdateError(xhr, status, error) {
         errorMessage = 'Error updating user';
     }
 
-    showMessage(errorMessage, 'error'); 
-    
-    if ($('#editModal' + (userId || currentUserId)).length) {
-        hideEditModal(userId);
-    }
-}
+    showMessage(errorMessage, 'error');
 
+    // if ($('#editModal' + (userId || currentUserId)).length) {
+    //     hideEditModal(userId);
+    // }
+}
 
 
 function updateSelectAllCheckbox() {
