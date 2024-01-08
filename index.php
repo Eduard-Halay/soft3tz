@@ -71,6 +71,7 @@ $result = mysqli_query($induction, "SELECT * FROM `client`");
                     </div>
 
                     <div id="messageBox" class="mt-3 alert alert-danger" style="display: none;"></div>
+                   
                     <br>
                     <table class="table table-bordered">
                         <thead>
@@ -102,7 +103,7 @@ while ($bd = mysqli_fetch_assoc($result)) {
     echo "<a href='#' class='btn border-dark btn-sm me-1 btn-rounded deleteUserBtn'><i class='fas fa-trash-alt'></i></a>";
     echo "</td>";
     echo "</tr>";
-
+  
     // Модальное окно для редактирования
     echo "<div class='modal fade ' id='editModal{$userId}' tabindex='-1' aria-labelledby='editModalLabel' aria-hidden='true'>";
     echo "  <div class='modal-dialog'>";
@@ -209,15 +210,17 @@ while ($bd = mysqli_fetch_assoc($result)) {
         success: function (response) {
             if (response && response.status !== undefined) {
                 if (response.status === false) {
-                   
                     response.error.forEach(function (error) {
                         showMessage('Error updating status for user ' + error.userId + ': ' + error.error);
+
+                        $('.selectCheckbox').prop('checked', false);
                     });
-                 
                     updateElements(updatedUserIds, newStatus);
                 } else {
-                   
                     updateElements(userIds, newStatus);
+                   
+                    $('.selectCheckbox').prop('checked', false);
+                    updateSelectAllCheckbox();
                 }
             } else {
                 showMessage('Invalid response format');
@@ -225,7 +228,6 @@ while ($bd = mysqli_fetch_assoc($result)) {
         },
         error: function (xhr, status, error) {
             showMessage('Error updating status');
-           
             updateElements(updatedUserIds, newStatus);
             $(document).trigger('ajaxError', [xhr, status, error]);
         }
@@ -519,13 +521,16 @@ function deleteUser(userId, userName) {
 
 
 function showMessage(message) {
-    var messageBox = $('#messageBox');
-    messageBox.text(message);
-    messageBox.show();
+   
+    var modal = $('#messageModal');
+    var modalBody = $('#messageModalBody');
+    modalBody.text(message);
+    modal.modal('show');
 
+   
     setTimeout(function () {
-        messageBox.hide();
-    }, 5000);
+        modal.modal('hide');
+    }, 3000);
 }
 
 
@@ -683,8 +688,7 @@ function updateUser(userId) {
         }
 
         if (userId && $('#editModal' + userId).length) {
-            // Не закрывать модальное окно в случае ошибки
-            // hideEditModal(userId);
+           
 
             $('#editMessageBox' + userId).text(errorMessage).addClass('alert-danger').show();
         }
@@ -765,9 +769,9 @@ function handleUpdateSuccess(userId, response, statusCheckbox, nameInput, lastna
                     var statusCircle = userRow.find('.status-circle');
                     statusCircle.removeClass().addClass('status-circle ' + (userData.status === '1' ? 'status-active' : 'status-inactive'));
 
-                    // if ($('#editModal' + userId).length) {
-                    //     hideEditModal(userId);
-                    // }
+                     if ($('#editModal' + userId).length) {
+                         hideEditModal(userId);
+                     }
                 } else {
                     console.error('User row not found');
                 }
@@ -847,7 +851,7 @@ $('#selectAllCheckbox').change(function () {
                         <label for="addLastname" class="form-label">Last name</label>
                         <input type="text" class="form-control" id="addLastname" required>
                     </div>
-                    <!--  элемент для вывода сообщения об ошибке -->
+                 
                     <div id="errorMessage" class="mb-3 text-danger"></div>
                       <div class="mb-3">
                         <label for="addStatus" class="form-label">Status</label>
@@ -893,6 +897,23 @@ $('#selectAllCheckbox').change(function () {
     </div>
 </div>
 
+
+<div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="messageModalLabel">Message</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="messageModalBody">
+                <!-- Текст сообщения -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 
 
