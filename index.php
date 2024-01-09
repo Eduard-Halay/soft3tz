@@ -48,6 +48,8 @@ $result = mysqli_query($induction, "SELECT * FROM `client`");
         .form-check-input:checked {
     background-color: #2ecc71; 
 }
+
+
     </style>
 </head>
 <body>
@@ -740,7 +742,6 @@ function updateUser(userId) {
         }
     });
 }
-
 function handleUpdateSuccess(userId, response, statusCheckbox, nameInput, lastnameInput) {
     if (response && response.status !== undefined) {
         if (response.status === false) {
@@ -750,13 +751,18 @@ function handleUpdateSuccess(userId, response, statusCheckbox, nameInput, lastna
             } else {
                 errorMessage = 'Error updating user';
             }
-            //message then
-          //  showMessage(errorMessage, 'error');
-            $('#editMessageBox' + userId).text(errorMessage).addClass('alert-danger').show();
-            // if ($('#editModal' + (userId || currentUserId)).length) {
-            //     hideEditModal(userId);
-            // }
 
+            $('#editMessageBox' + userId).text(errorMessage).addClass('alert-danger').show();
+
+            
+            $('#editModal' + userId).on('hidden.bs.modal', function () {
+                
+
+                $('#editMessageBox' + userId).text('').removeClass('alert-danger');
+               
+            });
+
+           
         } else {
             if (response.status === true) {
                 var userRow = $('tr[data-user-id="' + userId + '"]');
@@ -783,6 +789,7 @@ function handleUpdateSuccess(userId, response, statusCheckbox, nameInput, lastna
         console.error('Invalid response format');
     }
 }
+
 
 function handleUpdateError(xhr, status, error) {
     var errorMessage;
