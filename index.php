@@ -528,9 +528,9 @@ function showMessage(message) {
     modal.modal('show');
 
    
-    setTimeout(function () {
-        modal.modal('hide');
-    }, 3000);
+    //setTimeout(function () {
+      //  modal.modal('hide');
+  //  }, 3000);
 }
 
 
