@@ -545,7 +545,9 @@ function createEditModal(userId, userData) {
     modal.find('.modal-content').append('<div class="modal-header"><h5 class="modal-title" id="editModalLabel' + userId + '">Update User</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>');
     modal.find('.modal-content').append('<div class="modal-body">');
     
-   
+    modal.find('.modal-body').append('<div class="mt-3 alert alert-danger" id="editMessageBox' + userId + '" style="display: none;"></div>');
+
+
     var form = $('<form id="editForm' + userId + '">');
     form.append('<div class="mb-3"><label for="editName' + userId + '" class="form-label">Name</label><input type="text" class="form-control" id="editName' + userId + '" value="' + userData.name_first + '"></div>');
 form.append('<div class="mb-3"><label for="editLastname' + userId + '" class="form-label">Lastname</label><input type="text" class="form-control" id="editLastname' + userId + '" value="' + userData.name_last + '"></div>');
@@ -757,9 +759,8 @@ function handleUpdateSuccess(userId, response, statusCheckbox, nameInput, lastna
             
             $('#editModal' + userId).on('hidden.bs.modal', function () {
                 
-
                 $('#editMessageBox' + userId).text('').removeClass('alert-danger');
-               
+                $('#editMessageBox' + userId).text(errorMessage).addClass('alert-danger').hide();
             });
 
            
