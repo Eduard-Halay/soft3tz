@@ -216,11 +216,11 @@ while ($bd = mysqli_fetch_assoc($result)) {
                         showMessage('Error updating status for user ' + error.userId + ': ' + error.error);
 
                         $('.selectCheckbox').prop('checked', false);
+                        updateSelectAllCheckbox();
                     });
-                    updateElements(updatedUserIds, newStatus);
                 } else {
                     updateElements(userIds, newStatus);
-                   
+                    updateModalStatus(updatedUserIds[0], newStatus); // Обновляем статус в модальном окне для первого пользователя
                     $('.selectCheckbox').prop('checked', false);
                     updateSelectAllCheckbox();
                 }
@@ -230,10 +230,16 @@ while ($bd = mysqli_fetch_assoc($result)) {
         },
         error: function (xhr, status, error) {
             showMessage('Error updating status');
-            updateElements(updatedUserIds, newStatus);
             $(document).trigger('ajaxError', [xhr, status, error]);
         }
     });
+}
+
+function updateModalStatus(userId, newStatus) {
+    var statusCheckbox = $('#editStatus' + userId);
+
+    // Обновляем значение статуса в модальном окне
+    statusCheckbox.prop('checked', newStatus === '1');
 }
 
 function updateElements(userIds, newStatus) {
@@ -242,6 +248,7 @@ function updateElements(userIds, newStatus) {
         statusCircle.css('background-color', newStatus === '1' ? 'green' : 'gray');
     });
 }
+
 
 
 
@@ -775,7 +782,8 @@ function handleUpdateSuccess(userId, response, statusCheckbox, nameInput, lastna
 
                     var statusCircle = userRow.find('.status-circle');
                     statusCircle.removeClass().addClass('status-circle ' + (userData.status === '1' ? 'status-active' : 'status-inactive'));
-
+                    statusCircle.css('background-color', '');
+                    
                      if ($('#editModal' + userId).length) {
                          hideEditModal(userId);
                      }
