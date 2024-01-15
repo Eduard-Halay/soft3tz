@@ -19,11 +19,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $userData = mysqli_fetch_assoc($selectResult);
 
             if ($userData === null) {
+               
                 $errorResponse = array(
                     'status' => false,
                     'error' => array('code' => 104, 'message' => 'object with this ID was not found'),
                     'user' => null
                 );
+                header('Content-Type: application/json');
                 echo json_encode($errorResponse);
                 exit;
             }
@@ -48,6 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'error' => array('code' => 101, 'message' => 'Error selecting user'),
                 'user' => null
             );
+            header('Content-Type: application/json');
             echo json_encode($errorResponse);
         }
     } else {
@@ -56,6 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'error' => array('code' => 102, 'message' => 'Error updating user'),
             'user' => null
         );
+        header('Content-Type: application/json');
         echo json_encode($errorResponse);
     }
 } else {
@@ -64,6 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'error' => array('code' => 103, 'message' => 'Invalid request'),
         'user' => null
     );
+    header('Content-Type: application/json');
     echo json_encode($errorResponse);
 }
 ?>
