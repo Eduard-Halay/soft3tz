@@ -183,22 +183,11 @@ while ($bd = mysqli_fetch_assoc($result)) {
     var updatedUserIds = [];
 
     var requestData = {
-        users: [],
+        userIds: userIds.join(','), 
         newStatus: newStatus
     };
 
-    userIds.forEach(function (userId) {
-        var userRow = $('tr[data-user-id="' + userId + '"]');
-        if (userRow.length) {
-            requestData.users.push({ id: userId, status: newStatus });
-            updatedUserIds.push(userId);
-        } else {
-            var error = { userId: userId, error: 'User with id ' + userId + ' not found' };
-            errors.push(error);
-        }
-    });
-
-    if (requestData.users.length === 0) {
+    if (userIds.length === 0) {
         showMessage('No valid users selected.');
         return;
     }
@@ -206,21 +195,26 @@ while ($bd = mysqli_fetch_assoc($result)) {
     $.ajax({
         type: 'POST',
         url: 'update_status.php',
-        data: { users: requestData.users, newStatus: newStatus },
+        data: requestData,
         cache: false,
         dataType: 'json',
         success: function (response) {
             if (response && response.status !== undefined) {
                 if (response.status === false) {
-                    response.error.forEach(function (error) {
-                        showMessage('Error updating status for user ' + error.userId + ': ' + error.error);
+                    if (response.error && response.error.length > 0) {
+                        showMessage('Error updating status: ' + response.error[0].error);
+                    } else {
+                        showMessage('Unknown error updating status.');
+                    }
 
-                        $('.selectCheckbox').prop('checked', false);
-                        updateSelectAllCheckbox();
-                    });
+                    $('.selectCheckbox').prop('checked', false);
+                    updateSelectAllCheckbox();
                 } else {
-                    updateElements(userIds, newStatus);
-                    updateModalStatus(updatedUserIds[0], newStatus); // Обновляем статус в модальном окне для первого пользователя
+                    if (response.ids && response.ids.length > 0) {
+                        updateElements(response.ids, newStatus);
+                        updateModalStatus(response.ids[0], newStatus);
+                    }
+
                     $('.selectCheckbox').prop('checked', false);
                     updateSelectAllCheckbox();
                 }
@@ -238,7 +232,6 @@ while ($bd = mysqli_fetch_assoc($result)) {
 function updateModalStatus(userId, newStatus) {
     var statusCheckbox = $('#editStatus' + userId);
 
-    // Обновляем значение статуса в модальном окне
     statusCheckbox.prop('checked', newStatus === '1');
 }
 
@@ -248,11 +241,6 @@ function updateElements(userIds, newStatus) {
         statusCircle.css('background-color', newStatus === '1' ? 'green' : 'gray');
     });
 }
-
-
-
-
-
 
 
 
