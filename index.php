@@ -23,34 +23,9 @@ $result = mysqli_query($induction, "SELECT * FROM `client`");
     <!-- Подключение Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
 
+    <link rel="stylesheet" href="style.css">
     
-    
-    <style>
-        .status-circle {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-
-        .status-active {
-            background-color: green;
-        }
-
-        .status-inactive {
-            background-color: gray;
-        }
-        .form-select{
-            width:160px;
-            padding-left: 20px;
-            padding-right: 20px;
-        }
-        .form-check-input:checked {
-    background-color: #2ecc71; 
-}
-
-
-    </style>
+  
 </head>
 <body>
 
@@ -89,76 +64,76 @@ $result = mysqli_query($induction, "SELECT * FROM `client`");
                         </thead>
                         <tbody>
                         <?php
+$roles = [1 => "admin", 2 => "user"];
+
 while ($bd = mysqli_fetch_assoc($result)) {
     $userId = $bd['id'];
-    echo "<tr data-user-id='{$userId}'>";
-    echo "<td><input type='checkbox' class='selectCheckbox'></td>";
-    echo "<td>{$bd['name']}&nbsp;{$bd['lastname']}</td>";
-    echo "<td>";
-    echo ($bd['role'] == '1') ? 'admin' : 'user';
-    echo "</td>";
-    $statusClass = ($bd['status'] == '1') ? 'status-active' : 'status-inactive';
-    echo "<td class='text-center align-middle'><div class='status-circle {$statusClass}'></div></td>";
-    echo "<td class='text-center align-middle'>";
-    echo "<a href='#' class='btn border-dark btn-sm ms-1 btn-rounded editUserBtn' data-user-id='{$userId}'><i class='fas fa-pen-to-square'></i></a>";
+    $statusClass = ($bd['status'] == '1') ? 'active' : '';
 
-    echo "<a href='#' class='btn border-dark btn-sm me-1 btn-rounded deleteUserBtn'><i class='fas fa-trash-alt'></i></a>";
-    echo "</td>";
-    echo "</tr>";
-  
-    // Модальное окно для редактирования
-    echo "<div class='modal fade ' id='editModal{$userId}' tabindex='-1' aria-labelledby='editModalLabel' aria-hidden='true'>";
-    echo "  <div class='modal-dialog'>";
-    echo "    <div class='modal-content'>";
-    echo "      <div class='modal-header'>";
-    echo "        <h5 class='modal-title' id='editModalLabel'>Update User</h5>";
-    echo "        <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>";
-    echo "      </div>";
-    echo "      <div class='modal-body'>";
-    echo "        <form id='editForm{$userId}'>";
-    echo "          <div class='mb-3'>";
+    ?>
+    <tr data-user-id='<?= $userId ?>'>
+        <td><input type='checkbox' class='selectCheckbox'></td>
+        <td><?= $bd['name'] ?>&nbsp;<?= $bd['lastname'] ?></td>
+        <td><?= $roles[$bd['role']] ?></td>
+        <td class='text-center align-middle'><div class='status-circle <?= $statusClass ?>'></div></td>
+        <td class='text-center align-middle'>
+            <a href='#' class='btn border-dark btn-sm ms-1 btn-rounded editUserBtn' data-user-id='<?= $userId ?>'><i class='fas fa-pen-to-square'></i></a>
+            <a href='#' class='btn border-dark btn-sm me-1 btn-rounded deleteUserBtn'><i class='fas fa-trash-alt'></i></a>
+        </td>
+    </tr>
 
-    echo "<div id='editMessageBox{$userId}' class='mt-3 alert alert-danger' style='display: none;'></div>";
-    
-
-    echo "            <label for='editName{$userId}' class='form-label'>Name</label>";
-    echo "            <input type='text' class='form-control' id='editName{$userId}' value='{$bd['name']}'>";
-    echo "          </div>";
-    echo "          <div class='mb-3'>";
-    echo "            <label for='editLastname{$userId}' class='form-label'>Lastname</label>";
-    echo "            <input type='text' class='form-control' id='editLastname{$userId}' value='{$bd['lastname']}'>";
-    echo "          </div>";
-    echo "          <div class='mb-3'>";
-    echo "            <label for='editStatus{$userId}' class='form-label'>Status</label>";
-    echo "            <div class='form-check form-switch'>";
-    echo "              <input class='form-check-input' type='checkbox' id='editStatus{$userId}'";
-    echo ($bd['status'] == '1') ? " checked" : "";
-    echo ">";
-    echo "              <label class='form-check-label' for='editStatus{$userId}'></label>";
-    echo "            </div>";
-    echo "          </div>";
-    echo "          <div class='mb-3'>";
-    echo "            <label for='editRole{$userId}' class='form-label'>Role</label>";
-    echo "            <select class='form-select' id='editRole{$userId}'>";
-    echo "<option value='2' " . (($bd['role'] == '2') ? 'selected' : '') . ">User</option>";
-    echo "<option value='1' " . (($bd['role'] == '1') ? 'selected' : '') . ">Admin</option>";
-    echo "            </select>";
-    echo "          </div>";
-    echo "        </form>";
-    echo "      </div>";
-    echo "      <div class='modal-footer'>";
-    echo "        <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>";
-    echo "        <button type='button' class='btn btn-primary' onclick='updateUser({$userId})'>Update</button>";
-    echo "      </div>";
-    echo "    </div>";
-    echo "  </div>";
-    echo "</div>";
+    <!-- Модальное окно для редактирования -->
+    <div class='modal fade' id='editModal<?= $userId ?>' tabindex='-1' aria-labelledby='editModalLabel' aria-hidden='true'>
+        <div class='modal-dialog'>
+            <div class='modal-content'>
+                <div class='modal-header'>
+                    <h5 class='modal-title' id='editModalLabel'>Update User</h5>
+                    <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+                </div>
+                <div class='modal-body'>
+                    <form id='editForm<?= $userId ?>'>
+                        <div class='mb-3'>
+                            <div id='editMessageBox<?= $userId ?>' class='mt-3 alert alert-danger' style='display: none;'></div>
+                            <label for='editName<?= $userId ?>' class='form-label'>Name</label>
+                            <input type='text' class='form-control' id='editName<?= $userId ?>' value='<?= $bd['name'] ?>'>
+                        </div>
+                        <div class='mb-3'>
+                            <label for='editLastname<?= $userId ?>' class='form-label'>Lastname</label>
+                            <input type='text' class='form-control' id='editLastname<?= $userId ?>' value='<?= $bd['lastname'] ?>'>
+                        </div>
+                        <div class='mb-3'>
+                            <label for='editStatus<?= $userId ?>' class='form-label'>Status</label>
+                            <div class='form-check form-switch'>
+                                <input class='form-check-input' type='checkbox' id='editStatus<?= $userId ?>'<?= ($bd['status'] == '1') ? " checked" : "" ?>>
+                                <label class='form-check-label' for='editStatus<?= $userId ?>'></label>
+                            </div>
+                        </div>
+                        <div class='mb-3'>
+                            <label for='editRole<?= $userId ?>' class='form-label'>Role</label>
+                            <select class='form-select' id='editRole<?= $userId ?>'>
+                                <?php
+                                foreach ($roles as $roleId => $roleName) {
+                                    $selected = ($bd['role'] == $roleId) ? ' selected' : '';
+                                    echo "<option value='{$roleId}'{$selected}>{$roleName}</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class='modal-footer'>
+                    <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
+                    <button type='button' class='btn btn-primary' onclick='updateUser(<?= $userId ?>)'>Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php
 }
 ?>
-
-
 </tbody>
 </table>
+
 
                     <div class="mb-3 d-flex align-items-center">
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">Add</button>
@@ -238,11 +213,12 @@ function updateModalStatus(userId, newStatus) {
 function updateElements(userIds, newStatus) {
     userIds.forEach(function (userId) {
         var statusCircle = $('tr[data-user-id="' + userId + '"] .status-circle');
-        statusCircle.css('background-color', newStatus === '1' ? 'green' : 'gray');
+        var isActive = newStatus === '1';
+        
+        statusCircle.toggleClass('active', isActive);
+        statusCircle.css('background-color', isActive ? 'green' : 'gray');
     });
 }
-
-
 
 function updateStatusCheckboxes() {
     var checkedUserIds = [];
@@ -600,7 +576,7 @@ function addUser() {
                 newRow += "<td><input type='checkbox' class='selectCheckbox'></td>";
                 newRow += "<td>" + userData.name_first + "&nbsp;" + userData.name_last + "</td>";
                 newRow += "<td>" + (userData.role === '1' ? 'admin' : 'user') + "</td>";
-                newRow += "<td class='text-center align-middle'><div class='status-circle " + (userData.status === '1' ? 'status-active' : 'status-inactive') + "'></div></td>";
+                newRow += "<td class='text-center align-middle'><div class='status-circle " + (userData.status === '1' ? 'active' : '') + "'></div></td>";
                 newRow += "<td class='text-center align-middle'>";
                 newRow += "<a href='#' class='btn border-dark btn-sm ms-1 btn-rounded editUserBtn' data-user-id='" + userData.id + "'><i class='fas fa-pen-to-square'></i></a>";
                 newRow += "<a href='#' class='btn border-dark btn-sm me-1 btn-rounded deleteUserBtn'><i class='fas fa-trash-alt'></i></a>";
@@ -769,7 +745,7 @@ function handleUpdateSuccess(userId, response, statusCheckbox, nameInput, lastna
                     userRow.find('td:nth-child(3)').text(userData.role === '1' ? 'admin' : 'user');
 
                     var statusCircle = userRow.find('.status-circle');
-                    statusCircle.removeClass().addClass('status-circle ' + (userData.status === '1' ? 'status-active' : 'status-inactive'));
+statusCircle.toggleClass('active', userData.status === '1');
                     statusCircle.css('background-color', '');
                     
                      if ($('#editModal' + userId).length) {
