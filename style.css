@@ -1,0 +1,24 @@
+
+
+.status-circle.active {
+    background-color: green;
+}
+
+.status-circle {
+    background-color: gray;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-block;
+
+}
+
+.form-select {
+    width: 160px;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.form-check-input:checked {
+    background-color: #2ecc71;
+}
