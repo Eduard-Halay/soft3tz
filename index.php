@@ -37,7 +37,9 @@ $result = mysqli_query($induction, "SELECT * FROM `client`");
                     <h2>Users</h2>
 
                     <div class="mt-3 d-flex align-items-center">
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">Add</button>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#userModal<?=$userId?>" data-operation="add">Add</button>
+                  
+                    
                      <select class="form-select rounded" id="actionSelect" style="margin-right: 10px;margin-left: 10px;">
                         <option class='activ'>-Please-Select-</option>
                         <option value="activate">Set Active</option>
@@ -77,57 +79,61 @@ while ($bd = mysqli_fetch_assoc($result)) {
         <td><?= $roles[$bd['role']] ?></td>
         <td class='text-center align-middle'><div class='status-circle <?= $statusClass ?>'></div></td>
         <td class='text-center align-middle'>
-            <a href='#' class='btn border-dark btn-sm ms-1 btn-rounded editUserBtn' data-user-id='<?= $userId ?>'><i class='fas fa-pen-to-square'></i></a>
+       <a href="#" class="btn border-dark btn-sm ms-1 btn-rounded editUserBtn" data-bs-toggle="modal" data-bs-target="#userModal" data-user-id="<?= $userId ?>" data-operation="edit"><i class='fas fa-pen-to-square'></i></a>
             <a href='#' class='btn border-dark btn-sm me-1 btn-rounded deleteUserBtn'><i class='fas fa-trash-alt'></i></a>
         </td>
     </tr>
 
-    <!-- Модальное окно для редактирования -->
-    <div class='modal fade' id='editModal<?= $userId ?>' tabindex='-1' aria-labelledby='editModalLabel' aria-hidden='true'>
-        <div class='modal-dialog'>
-            <div class='modal-content'>
-                <div class='modal-header'>
-                    <h5 class='modal-title' id='editModalLabel'>Update User</h5>
-                    <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
-                </div>
-                <div class='modal-body'>
-                    <form id='editForm<?= $userId ?>'>
-                        <div class='mb-3'>
-                            <div id='editMessageBox<?= $userId ?>' class='mt-3 alert alert-danger' style='display: none;'></div>
-                            <label for='editName<?= $userId ?>' class='form-label'>Name</label>
-                            <input type='text' class='form-control' id='editName<?= $userId ?>' value='<?= $bd['name'] ?>'>
+    <!-- обьединенное модальное окно  -->
+<div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userModalLabel">Add User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm">
+                    <div class="mb-3">
+                    <div id='UserMessageBox' class='mt-3 alert alert-danger' style='display: none;'></div>
+                        <label for="userName" class="form-label">First name</label>
+                        <input type="text" class="form-control" id="userName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="userLastname" class="form-label">Last name</label>
+                        <input type="text" class="form-control" id="userLastname" required>
+                    </div>
+
+                    <div id="errorMessage" class="mb-3 text-danger"></div>
+                    <div class="mb-3">
+                        <label for="userStatus" class="form-label">Status</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="userStatus" checked>
                         </div>
-                        <div class='mb-3'>
-                            <label for='editLastname<?= $userId ?>' class='form-label'>Lastname</label>
-                            <input type='text' class='form-control' id='editLastname<?= $userId ?>' value='<?= $bd['lastname'] ?>'>
-                        </div>
-                        <div class='mb-3'>
-                            <label for='editStatus<?= $userId ?>' class='form-label'>Status</label>
-                            <div class='form-check form-switch'>
-                                <input class='form-check-input' type='checkbox' id='editStatus<?= $userId ?>'<?= ($bd['status'] == '1') ? " checked" : "" ?>>
-                                <label class='form-check-label' for='editStatus<?= $userId ?>'></label>
-                            </div>
-                        </div>
-                        <div class='mb-3'>
-                            <label for='editRole<?= $userId ?>' class='form-label'>Role</label>
-                            <select class='form-select' id='editRole<?= $userId ?>'>
-                                <?php
-                                foreach ($roles as $roleId => $roleName) {
-                                    $selected = ($bd['role'] == $roleId) ? ' selected' : '';
-                                    echo "<option value='{$roleId}'{$selected}>{$roleName}</option>";
-                                }
-                                ?>
-                            </select>
-                        </div>
-                    </form>
-                </div>
-                <div class='modal-footer'>
-                    <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
-                    <button type='button' class='btn btn-primary' onclick='updateUser(<?= $userId ?>)'>Update</button>
-                </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="userRole" class="form-label">Role</label>
+                        <select class="form-select" id="userRole" required>
+                            <option value="2">User</option>
+                            <option value="1">Admin</option>
+                        </select>
+                    </div>
+
+                    <!-- Добавьте скрытое поле для указания текущей операции -->
+                    <input type="hidden" id="operationType" value="add">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <!-- Измените текст кнопки в зависимости от операции -->
+                <button type="button" class="btn btn-primary" onclick="performOperation()">Add User</button>
             </div>
         </div>
     </div>
+</div>
+
+
+
     <?php
 }
 ?>
@@ -136,7 +142,7 @@ while ($bd = mysqli_fetch_assoc($result)) {
 
 
                     <div class="mb-3 d-flex align-items-center">
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">Add</button>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#userModal" data-operation='add'>Add</button>
                         <select class="form-select" id="actionSelect2" style="margin-right: 10px;margin-left: 10px;">
                             <option class='activ'>-Please-Select-</option>
                             <option value="activate">Set Active</option>
@@ -152,7 +158,8 @@ while ($bd = mysqli_fetch_assoc($result)) {
 
     
                     <script>
-                    
+ 
+
                     function updateStatus(userIds, newStatus) {
     var errors = [];
     var updatedUserIds = [];
@@ -345,10 +352,7 @@ $('body').on('change', '.selectCheckbox', function () {
 
 
 
-    $('.editUserBtn').click(function () {
-        var userId = $(this).data('user-id');
-        showEditModal(userId);
-    });
+  
 
     $('#saveChangesBtn').click(function () {
     });
@@ -490,9 +494,6 @@ function deleteUser(userId, userName) {
     });
 }
 
-
-
-
 function showMessage(message) {
    
     var modal = $('#messageModal');
@@ -501,45 +502,121 @@ function showMessage(message) {
     modal.modal('show');
 
    
-    //setTimeout(function () {
-      //  modal.modal('hide');
-  //  }, 3000);
 }
+////////////////////////////////////////////////////////////////
 
 
-function createEditModal(userId, userData) {
+
+
+function performOperation() {
+        var operationType = $('#operationType').val();
+
+        switch (operationType) {
+            case 'add':
+                addUser();
+                break;
+            case 'edit':
+                updateUser(currentUserId);
+                break;
+            default:
+                showMessage('Invalid operation type');
+        }
+    }
+    $(document).ready(function () {
+    $('#userModal').on('hidden.bs.modal', function () {
+        $('#userForm').trigger('reset');
+        $('#errorMessage').text('');
+        $('#operationType').val('add');
+    });
+
    
-    var modal = $('<div class="modal fade" id="editModal' + userId + '" tabindex="-1" aria-labelledby="editModalLabel' + userId + '" aria-hidden="true">');
+    $('.editUserBtn').click(function () {
+        var userId = $(this).data('user-id');
+        currentUserId = userId;
+        showEditModal(userId);
+
+       
+        $('#operationType').val('edit');
+
+        
+        $('#userModalLabel').text('Update User');
+        $('.modal-footer button.btn-primary').text('Update User');
+    });
+
     
+    $('#userModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var modal = $(this);
+
+        if (button.data('operation') === 'edit') {
+            modal.find('.modal-title').text('Update  User');
+            modal.find('.modal-footer button.btn-primary').text('Update User');
+        } else if(button.data('operation') === 'add') {
+            modal.find('.modal-title').text('Add User');
+            modal.find('.modal-footer button.btn-primary').text('Add User');
+            
+        }
+    });
+
    
-    modal.append('<div class="modal-dialog"><div class="modal-content">');
-    modal.find('.modal-content').append('<div class="modal-header"><h5 class="modal-title" id="editModalLabel' + userId + '">Update User</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>');
-    modal.find('.modal-content').append('<div class="modal-body">');
-    
-    modal.find('.modal-body').append('<div class="mt-3 alert alert-danger" id="editMessageBox' + userId + '" style="display: none;"></div>');
+    $('#addUserButton').on('click', function () {
+        addUser();
+    });
 
+   
+    $('body').on('click', '.editUserBtn', function () {
+        var userId = $(this).data('user-id');
+        var fullName = $(this).closest('tr').find('td:nth-child(2)').text().trim();
+        
+        var nameMatch = fullName.match(/^(\S+)\s+(\S+)$/);
 
-    var form = $('<form id="editForm' + userId + '">');
-    form.append('<div class="mb-3"><label for="editName' + userId + '" class="form-label">Name</label><input type="text" class="form-control" id="editName' + userId + '" value="' + userData.name_first + '"></div>');
-form.append('<div class="mb-3"><label for="editLastname' + userId + '" class="form-label">Lastname</label><input type="text" class="form-control" id="editLastname' + userId + '" value="' + userData.name_last + '"></div>');
+        if (nameMatch) {
+            var userData = {
+                name_first: nameMatch[1],
+                name_last: nameMatch[2],
+                status: $(this).closest('tr').find('.status-circle').hasClass('active') ? '1' : '0',
+                role: $(this).closest('tr').find('td:nth-child(3)').text() === 'admin' ? '1' : '2'
+            };
 
-    form.append('<div class="mb-3"><label for="editStatus' + userId + '" class="form-label">Status</label><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="editStatus' + userId + '" ' + (userData.status === '1' ? 'checked' : '') + '><label class="form-check-label" for="editStatus' + userId + '"></label></div></div>');
-    form.append('<div class="mb-3"><label for="editRole' + userId + '" class="form-label">Role</label><select class="form-select" id="editRole' + userId + '"><option value="2" ' + (userData.role === '2' ? 'selected' : '') + '>User</option><option value="1" ' + (userData.role === '1' ? 'selected' : '') + '>Admin</option></select></div>');
-    modal.find('.modal-body').append(form);
-    
-    
-    modal.find('.modal-content').append('<div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button><button type="button" class="btn btn-primary" onclick="updateUser(' + userId + ')">Update</button></div>');
-    
-    
-    modal.append('</div></div>');
+            showEditModal(userId, userData);
+        } else {
+            console.error('Invalid user data:', userData);
+            return; 
+        }
+    });
 
-    return modal;
+    function showEditModal(userId, userData) {
+    $('#userForm').trigger('reset');
+
+    if (userData && userData.name_first && userData.name_last) {
+        $('#userName').val(userData.name_first);
+        $('#userLastname').val(userData.name_last);
+        $('#userStatus').prop('checked', userData.status === '1');
+        $('#userRole').val(userData.role);
+
+      
+        $('#operationType').val('edit');
+
+       
+        $('#userModalLabel').text('Update User');
+        $('.modal-footer button.btn-primary').text('Update User');
+
+       
+        $('#userModal').modal('show');
+    }
 }
+});
+
+
+
+
+
+
 function addUser() {
-    var nameInput = $('#addName');
-    var lastnameInput = $('#addLastname');
-    var roleSelect = $('#addRole');
-    var statusCheckbox = $('#addStatus');
+    var nameInput = $('#userName');
+    var lastnameInput = $('#userLastname');
+    var roleSelect = $('#userRole');
+    var statusCheckbox = $('#userStatus');
     var errorMessage = $('#errorMessage');
 
     var name = nameInput.val().trim();
@@ -578,18 +655,19 @@ function addUser() {
                 newRow += "<td>" + (userData.role === '1' ? 'admin' : 'user') + "</td>";
                 newRow += "<td class='text-center align-middle'><div class='status-circle " + (userData.status === '1' ? 'active' : '') + "'></div></td>";
                 newRow += "<td class='text-center align-middle'>";
-                newRow += "<a href='#' class='btn border-dark btn-sm ms-1 btn-rounded editUserBtn' data-user-id='" + userData.id + "'><i class='fas fa-pen-to-square'></i></a>";
+                newRow += "<a href='#' class='btn border-dark btn-sm ms-1 btn-rounded editUserBtn' data-user-id='" + userData.id + "' data-operation='edit'><i class='fas fa-pen-to-square'></i></a>";
                 newRow += "<a href='#' class='btn border-dark btn-sm me-1 btn-rounded deleteUserBtn'><i class='fas fa-trash-alt'></i></a>";
                 newRow += "</td>";
                 newRow += "</tr>";
 
+               
                 $('tbody').append(newRow);
-                $('#addUserModal').modal('hide');
+                $('#userModal').data('user-id', userData.id);  
+                currentUserId = userData.id;  
+                $('#userModal' ).modal('hide');
 
                 updateSelectAllCheckbox();
 
-                var editModal = createEditModal(userData.id, userData);
-                $('body').append(editModal);
             } else {
                 console.error('Invalid response format or null:', response);
             }
@@ -603,87 +681,14 @@ function addUser() {
 
 
 
-
-
-
-
-$(document).ready(function () {
-    $('#addUserModal').on('hidden.bs.modal', function () {
-        $('#addUserForm').trigger('reset');
-        $('#errorMessage').text(''); 
-    });
-
-    $('#addUserButton').on('click', function () {
-        addUser();
-    });
-});
-
-$(document).ready(function () {
-    $('body').on('click', '.editUserBtn', function () {
-        var userId = $(this).data('user-id');
-        showEditModal(userId);
-    });
-});
-
-function showEditModal(userId) {
-    
-    $('#editModal' + userId).modal('show');
-}
 var currentUserId = null;
 
-function hideEditModal(userId) {
-    var editModal;
-
-    if (userId) {
-        currentUserId = userId;
-    }
-
-    if (currentUserId !== null) {
-        editModal = $('#editModal' + currentUserId);
-        if (editModal.length) {
-            editModal.modal('hide');
-        } else {
-            console.error('Modal window for user with ID ' + currentUserId + ' not found');
-        }
-    } else {
-        console.error('userId is not defined');
-    }
-}
-
 function updateUser(userId) {
-    var errors = [];
-
-    function handleUpdateError(xhr, status, error) {
-        var errorMessage;
-
-        if (xhr.responseJSON && xhr.responseJSON.error) {
-            errorMessage = xhr.responseJSON.error.message;
-        } else {
-            errorMessage = 'Error updating user';
-        }
-
-        if (userId && $('#editModal' + userId).length) {
-           
-
-            $('#editMessageBox' + userId).text(errorMessage).addClass('alert-danger').show();
-        }
-
-        errors.push({ userId: currentUserId, error: errorMessage });
-        showMessage(errorMessage, 'error');
-    }
-
     var userRow = $('tr[data-user-id="' + userId + '"]');
-    if (!userRow.length) {
-        var error = { userId: userId, error: 'Object with this ID not found' };
-        errors.push(error);
-        showMessage(error.error, 'error');
-        return;
-    }
-
-    var nameInput = $('#editName' + userId);
-    var lastnameInput = $('#editLastname' + userId);
-    var statusCheckbox = $('#editStatus' + userId);
-    var roleSelect = $('#editRole' + userId);
+    var nameInput = $('#userName');
+    var lastnameInput = $('#userLastname');
+    var statusCheckbox = $('#userStatus');
+    var roleSelect = $('#userRole');
 
     var name = nameInput.val().trim();
     var lastname = lastnameInput.val().trim();
@@ -705,84 +710,86 @@ function updateUser(userId) {
         contentType: false,
         dataType: 'json',
         success: function (response) {
-            handleUpdateSuccess(userId, response, statusCheckbox, nameInput, lastnameInput);
+            handleUpdateResponse(userId, response);
         },
         error: function (xhr, status, error) {
-            handleUpdateError(xhr, status, error);
+            handleUpdateError(userId, xhr, status, error);
         },
         complete: function () {
-
+         
         }
     });
 }
-function handleUpdateSuccess(userId, response, statusCheckbox, nameInput, lastnameInput) {
-    if (response && response.status !== undefined) {
-        if (response.status === false) {
-            var errorMessage;
-            if (response.error && response.error.message) {
-                errorMessage = response.error.message;
-            } else {
-                errorMessage = 'Error updating user';
-            }
 
-            $('#editMessageBox' + userId).text(errorMessage).addClass('alert-danger').show();
+function handleUpdateResponse(userId, response) {
+    if (response && response.status !== undefined) {
+        if (response.status === true) {
+            updateUserData(userId, response.user);
+            hideEditModal(userId);
+        } else {
+            handleUpdateError(userId, null, 'error', response);
 
             
-            $('#editModal' + userId).on('hidden.bs.modal', function () {
-                
-                $('#editMessageBox' + userId).text('').removeClass('alert-danger');
-                $('#editMessageBox' + userId).text(errorMessage).addClass('alert-danger').hide();
-            });
-
-           
-        } else {
-            if (response.status === true) {
-                var userRow = $('tr[data-user-id="' + userId + '"]');
-                if (userRow.length) {
-                    var userData = response.user;
-
-                    userRow.find('td:nth-child(2)').html(userData.name_first + ' ' + userData.name_last);
-                    userRow.find('td:nth-child(3)').text(userData.role === '1' ? 'admin' : 'user');
-
-                    var statusCircle = userRow.find('.status-circle');
-statusCircle.toggleClass('active', userData.status === '1');
-                    statusCircle.css('background-color', '');
-                    
-                     if ($('#editModal' + userId).length) {
-                         hideEditModal(userId);
-                     }
-                } else {
-                    console.error('User row not found');
-                }
-            } else {
-                handleUpdateError(null, 'error', response);
-            }
         }
     } else {
         console.error('Invalid response format');
     }
 }
-
-
-function handleUpdateError(xhr, status, error) {
-    var errorMessage;
+function handleUpdateError(userId, xhr, status, error) {
+    var errorMessage = 'Error updating user';
 
     if (xhr && xhr.responseJSON && xhr.responseJSON.error) {
         errorMessage = xhr.responseJSON.error.message;
-    } else if (error && error.error) {
-        errorMessage = error.error;
-    } else {
-        errorMessage = 'Error updating user';
+    } else if (error) {
+        if (typeof error === 'string') {
+          
+            errorMessage = error;
+        } else if (error.error && error.error.message) {
+           
+            errorMessage = error.error.message;
+        }
     }
 
-    showMessage(errorMessage, 'error');
+ 
+    $('#UserMessageBox').text(errorMessage).addClass('alert-danger').show();
 
-    // if ($('#editModal' + (userId || currentUserId)).length) {
-    //     hideEditModal(userId);
-    // }
+    if (userId && $('#userModal').length) {
+        
+        $('#userModal').off('hidden.bs.modal');
+
+        
+        $('#userModal').on('hidden.bs.modal', function () {
+            $('#UserMessageBox').text('').removeClass('alert-danger').hide();
+           
+            $('#userForm').trigger('reset');
+        $('#errorMessage').text('');
+        $('#operationType').val('add');
+        });
+    }
 }
 
 
+function updateUserData(userId, userData) {
+    var userRow = $('tr[data-user-id="' + userId + '"]');
+    if (userRow.length) {
+        userRow.find('td:nth-child(2)').html(userData.name_first + ' ' + userData.name_last);
+        userRow.find('td:nth-child(3)').text(userData.role === '1' ? 'admin' : 'user');
+
+        var statusCircle = userRow.find('.status-circle');
+        statusCircle.toggleClass('active', userData.status === '1');
+        statusCircle.css('background-color', '');
+    } else {
+        console.error('User row not found');
+    }
+}
+
+function hideEditModal(userId) {
+    $('#userModal' ).modal('hide');
+    
+}
+
+
+//////////////////////////////////
 function updateSelectAllCheckbox() {
     var selectAllCheckbox = $('#selectAllCheckbox');
     var checkboxes = $('.selectCheckbox');
@@ -808,54 +815,6 @@ $('#selectAllCheckbox').change(function () {
 
 
 
-
-            </div>
-        </div>
-    </div>
-
-<!-- модальное окно для добавления пользователя -->
-<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addUserModalLabel">Add User</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="addUserForm">
-                    <div class="mb-3">
-                        <label for="addName" class="form-label">First name</label>
-                        <input type="text" class="form-control" id="addName" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="addLastname" class="form-label">Last name</label>
-                        <input type="text" class="form-control" id="addLastname" required>
-                    </div>
-                 
-                    <div id="errorMessage" class="mb-3 text-danger"></div>
-                      <div class="mb-3">
-                        <label for="addStatus" class="form-label">Status</label>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="addStatus" checked>
-                        </div>
-                       </div>
-                     <div class="mb-3">
-                        <label for="addRole" class="form-label">Role</label>
-                        <select class="form-select" id="addRole" required>
-                            <option value="2">User</option>
-                            <option value="1">Admin</option>
-                        </select>
-                    </div>
-                    
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="addUser()">Add User</button>
-            </div>
-        </div>
-    </div>
-</div>
 
      
 <!-- Модальное окно подтверждения удаления -->
@@ -886,7 +845,7 @@ $('#selectAllCheckbox').change(function () {
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="messageModalBody">
-                <!-- Текст сообщения -->
+             
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
